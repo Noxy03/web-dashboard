@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    @font-face {
+      font-family: '8Bit';
+      src: url('Ndot-55.otf') format('truetype');
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-row"> 
+      <div class="searchContainer"> 
+        <div class="search-box">
+          <button class="gemini-btn" id="claudeBtn" title="Open Claude">
+            <img id="claudeIcon" src="icons/claude-icon-color.png" alt="Claude Icon">
+          </button>
+          <button class="gemini-btn" id="geminiBtn" title="Open Gemini">
+            <img id="geminiIcon" src="icons/gemini-icon-color.png" alt="Gemini Icon">
+          </button>
+          <input type="text" id="searchInput" placeholder="AI Search" autocomplete="off">
+          <button class="clear-btn"> <i class="fas fa-times"></i>
+          </button> 
+        </div> 
+      </div> 
+
+      <button class="settings" id="openSettingsModal"> 
+        <i class="fa-solid fa-gear"></i> 
+      </button> 
+    </div>
+
+    <div class="header-row">
+      <nav class="tabs-container">
+        <ul class="tabs" id="setHeader">
+          <!-- Tabs are loaded dynamically here -->
+        </ul>
+      </nav>
+      <button class="setSettings" id="openSetSettingsModal">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+    </div>
+  </header>
+
+  <div class="container" id="shortcutContainer">
+    <!-- Shortcuts of the current set are rendered here -->
+  </div>
+
+  <!-- Modal Overlay for Settings -->
+  <div id="setSettingsModal" class="modal-overlay">
+    <div class="modal-content">
+      <h2><i class="fa-solid fa-folder"></i> Manage Shortcut Sets</h2>
+      
+      <div class="modal-section">
+        <label class="modalTitle">
+            <i class="fa-solid fa-plus"></i> Create New Set
+        </label>
+
+        <input type="text" id="newSetName" placeholder="Enter Set Name">
+
+        <div class="button-group">
+          <button class="save" id="addSet">
+            <span>Add</span>
+          </button>
+        </div>
+      </div>
+  
+      <div class="modal-section">
+        <label class="modalTitle">
+            <i class="fa-solid fa-pen"></i> Rename Set
+        </label>
+        <select id="renameSetList"></select>
+
+        <input type="text" id="renameSetName" placeholder="New Name">
+
+        <div class="button-group">
+          <button class="save" id="renameSet">
+            <span>Change</span>
+          </button>
+        </div>
+      </div>
+  
+      <div class="modal-section">
+        <label class="modalTitle">
+            <i class="fa-solid fa-trash"></i> Delete Set
+        </label>
+
+        <select id="deleteSetList"></select>
+
+        <div class="button-group">
+          <button class="delete" id="deleteSet">
+            <span>Delete</span>
+          </button>
+        </div>
+      </div>
+  
+      <div class="button-group">
+        <button class="cancel" id="closeSetSettingsModal">
+          <span>Close</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Object to Dashboard -->
+  <div id="addModal" class="modal-overlay">
+    <div class="modal-content">
+      <h2><i class="fa-solid fa-border-all"></i> Add to Dashboard</h2>
+
+      <div class="modal-section">
+        <label class="modalTitle" id="addModalTitle">
+            <i class="fa-solid fa-pen"></i> Add/Edit Shortcut
+        </label>
+
+        <label for="editName">Name</label>
+        <input type="text" id="editName" placeholder="Name">
+
+        <label for="editUrl">URL</label>
+        <input type="text" id="editUrl" placeholder="https://">
+
+        <div class="button-group">
+          <button class="save" id="saveEdit">
+            <span>Save</span>
+          </button>
+        </div>
+      </div>
+  
+      <div class="modal-section">
+        <label class="modalTitle">
+            <i class="fa-solid fa-grip-lines"></i> Add Divider
+        </label>
+
+        <div class="button-group">
+          <button class="save" id="addHorizontalDivider">
+            <span>Horizontal Line</span>
+          </button>
+          
+          <button class="save" id="addVerticalDivider">
+            <span>Vertical Line</span>
+          </button>
+        </div>
+      </div>
+  
+      <div class="button-group">
+        <button class="cancel" id="closeAddModal">
+          <span>Close</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Shortcut-Settings Modal -->
+  <div id="shortcutSettingsModal" class="modal-overlay">
+    <div class="modal-content">
+      <h2><i class="fa-solid fa-gear"></i> Shortcut Settings</h2>
+
+      <div class="modal-section">
+        <div class="shortcut-preview">
+          <img id="settingsShortcutIcon" src="" alt="Icon">
+          <span id="settingsShortcutName"></span>
+          <a id="settingsShortcutUrl" href="#" target="_blank"></a>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="button-group vertical">
+          <button class="save" id="editShortcutBtn">
+            <i class="fa-solid fa-pen"></i> Edit
+          </button>
+          
+          <button class="save" id="moveShortcutBtn">
+            <i class="fa-solid fa-arrows-up-down-left-right"></i> Move
+          </button>
+
+          <button class="delete" id="deleteShortcutBtn">
+            <i class="fa-solid fa-trash"></i> Delete
+          </button>
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button class="cancel" id="closeShortcutSettingsModal">
+          <span>Close</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Move Shortcut Modal -->
+  <div id="moveModal" class="modal-overlay">
+    <div class="modal-content">
+      <h2><i class="fa-solid fa-arrows-alt"></i> Move Shortcut</h2>
+      
+      <div class="modal-section">
+        <label class="modalTitle">
+          <i class="fa-solid fa-bullseye"></i> Select Target Tab
+        </label>
+
+        <select id="targetSetList"></select>
+      
+        <div class="button-group">
+          <button class="save" id="confirmMove">
+            <span>Move</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button class="cancel" id="cancelMove">
+          <span>Cancel</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="settingsModal" class="modal-overlay">
+    <div class="modal-content">
+      <h2><i class="fa-solid fa-wrench"></i> Settings</h2>
+
+      <div class="modal-section">
+        <label class="modalTitle">
+          <i class="fa-solid fa-palette"></i> Design
+        </label>
+
+        <div class="button-group">
+          <button class="save" id="lightModeBtn">
+            <span><i class="fa-solid fa-sun"></i> Light Mode</span>
+          </button>
+
+          <button class="save" id="darkModeBtn">
+            <span><i class="fa-solid fa-moon"></i> Dark Mode</span>
+          </button>
+        </div>
+      
+        <div class="button-group">
+          <button class="save" id="minmalModeBtn">
+            <span><i class="fa-solid fa-square"></i> Minimal Mode</span>
+          </button>
+
+          <button class="save" id="mochaModeBtn">
+            <span><i class="fa-solid fa-cat"></i> Catppucin Mocha</span>
+          </button>
+        </div>
+
+        <div class="button-group">
+          <button class="save" id="eightbitModeBtn">
+            <span><i class="fa-solid fa-gamepad"></i> 8bit Mode</span>
+          </button>
+
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <label class="modalTitle">
+          <i class="fa-solid fa-rocket"></i> Startup Behavior
+        </label>
+
+        <div class="radio-group">
+          <label class="radio-label">
+            <input type="radio" name="onOpenMode" value="last" id="onOpenLast">
+            Keep last open tab
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="onOpenMode" value="specific" id="onOpenSpecific">
+            Open specific tab
+          </label>
+        </div>
+
+        <select id="onOpenTabList" disabled></select>
+      </div>
+
+      <div class="modal-section">
+        <label class="modalTitle">
+          <i class="fa-solid fa-bookmark"></i> Data Source
+        </label>
+
+        <div class="button-group">
+          <button class="save" id="toggleBookmarksMode">
+            <span><i class="fa-solid fa-bookmark"></i> Bookmarks Mode</span>
+          </button>
+          
+          <button class="save" id="refreshBookmarksBtn">
+            <span><i class="fa-solid fa-sync"></i> Refresh Bookmarks</span>
+          </button>
+        </div>
+
+        <div class="info-box">
+          <p><strong>Bookmarks Mode:</strong> Uses a "Dashboard" folder in your Chrome bookmarks. Subfolders become tabs, bookmarks become shortcuts.</p>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <label class="modalTitle">
+          <i class="fa-solid fa-file-export"></i> Data Export / Import
+        </label>
+        <div class="button-group">
+          <button class="save" id="exportDataBtn">
+            <span>Export</span>
+          </button>
+          <button class="save" id="importDataBtn">
+            <span>Import</span>
+          </button>
+        </div>
+        <input type="file" id="importFileInput" accept=".json" style="display: none;">
+      </div>
+
+      <div class="button-group">
+        <button class="cancel" id="closeSettingsModal">
+          <span>Close</span>
+        </button>
+      </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

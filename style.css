@@ -1,0 +1,1585 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  transition:
+    background-color 0.3s,
+    color 0.3s;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Settings Button */
+.settings {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 12px 10px 0 0;
+  border-radius: 50%;
+  transition: background 0.2s;
+  position: absolute;
+  right: 0;
+}
+
+/* Shortcuts */
+.container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.add-tile {
+  font-size: 48px;
+  color: #aaa;
+  font-weight: bold;
+}
+
+.shortcutSettings-btn {
+  display: none;
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: rgba(255, 255, 255, 0.8);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  padding: 5px;
+  font-size: 14px;
+  line-height: 1;
+  z-index: 2;
+  pointer-events: auto !important;
+}
+
+.shortcut {
+  position: relative;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 15px;
+  margin: 0.5rem;
+  width: 112px;
+  height: 112px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.shortcut:hover {
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.shortcut:hover .shortcutSettings-btn {
+  display: block;
+}
+
+.shortcut.active {
+  z-index: 4 !important;
+}
+
+.shortcut img {
+  width: 48px;
+  height: 48px;
+  border-radius: 15px;
+}
+
+.shortcut a {
+  text-decoration: none;
+  color: #333;
+  font-weight: bold;
+  display: block;
+  margin-top: 10px;
+  pointer-events: auto !important;
+}
+
+.shortcut.dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+}
+
+/* Info Box */
+.info-box {
+  background: rgba(0, 123, 255, 0.1);
+  border: 1px solid rgba(0, 123, 255, 0.3);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 10px 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+[data-theme="light-mode"] .info-box p {
+  margin: 0;
+  color: #000000;
+}
+
+[data-theme="dark-mode"] .info-box p {
+  margin: 0;
+  color: #ffffff;
+}
+
+[data-theme="dark-mode"] .info-box {
+  background: rgba(0, 123, 255, 0.2);
+  border-color: rgba(0, 123, 255, 0.5);
+}
+
+[data-theme="dark-mode"] .info-box p {
+  color: #66b3ff;
+}
+
+.shortcut.drag-over {
+  border: 2px dashed #666;
+  background: #f8f8f8;
+}
+
+/* Shortcut Settings Button */
+.edit-btn {
+  display: none;
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: rgba(255, 255, 255, 0.8);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  padding: 5px;
+  font-size: 14px;
+  line-height: 1;
+  z-index: 2;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+
+.edit-btn:hover {
+  opacity: 1;
+  background: #eee;
+  display: block !important;
+}
+
+.shortcut:hover .edit-btn {
+  display: block !important;
+}
+
+/* Shortcut Settings Modal */
+.shortcutSettings-btn {
+  display: none;
+  position: absolute;
+  top: 30px;
+  right: 5px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  z-index: 3;
+  width: 90px;
+  pointer-events: auto;
+}
+
+.shortcutSettings-btn button {
+  width: 100%;
+  margin: 2px 0;
+  padding: 5px;
+  border: none;
+  background: #eee;
+  cursor: pointer;
+  border-radius: 3px;
+  pointer-events: auto;
+}
+
+.shortcutSettings-btn button:hover {
+  background: #ddd;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 25px;
+  border-radius: 8px;
+  width: 400px;
+  max-width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.modalTitle {
+  font-weight: bold;
+  margin: 0 0 1.5rem 0;
+  font-size: 1.15rem;
+  text-align: left;
+}
+
+.modal-content h2 {
+  color: rgb(56, 56, 56);
+  margin: 0 0 1.5rem 0;
+  font-size: 1.5rem;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 0.5rem;
+  text-align: left;
+}
+
+.modal-section {
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0px 0px 10px 2px rgba(0, 0, 0, 0.3);
+}
+
+label {
+  display: block;
+  color: rgb(71, 71, 71);
+  font-size: 0.95rem;
+  font-weight: 500;
+  margin: 0.8rem 0 0.2rem 0;
+}
+
+/* Modal Input Fields */
+.modal-section input[type="text"] {
+  width: 90%;
+  margin-top: 5px;
+  padding: 10px 15px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+}
+
+.modal-section input[type="text"]:focus {
+  border-color: #007bff;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.modal-section select {
+  width: 100%;
+  margin-top: 5px;
+  padding: 10px 15px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+}
+
+.modal-section select:focus {
+  border-color: #007bff;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+  margin-bottom: 15px;
+}
+
+.radio-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-weight: normal;
+  margin: 0;
+}
+
+.radio-label input[type="radio"] {
+  margin: 0;
+  cursor: pointer;
+}
+
+/* Modal Buttons */
+.button-group {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  list-style: none;
+}
+
+.modal-content button {
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.modal-content button.save {
+  background: #007bff;
+  color: white;
+  border: 2px solid #007bff;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 500;
+  width: 100%;
+}
+
+.modal-content button.save:hover {
+  background: #0069d9;
+  border-color: #0062cc;
+}
+
+.modal-content button.delete {
+  background: #dd0c0c;
+  color: white;
+  border: 2px solid #dd0c0c;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 500;
+  width: 100%;
+}
+
+.modal-content button.delete:hover {
+  background: #c90b0b;
+  border-color: #c90b0b;
+}
+
+.modal-content button.cancel {
+  margin-left: auto;
+  margin-right: 1.5rem;
+  background: #6c757d;
+  color: white;
+  border: 2px solid #6c757d;
+}
+
+.modal-content button.cancel:hover {
+  background: #5a6268;
+  border-color: #545b62;
+}
+
+/* Navigation Bar */
+header {
+  background: #333;
+  color: #fff;
+  text-align: center;
+  padding: 10px;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.header-row {
+  display: flex;
+  position: relative;
+  width: 100%;
+}
+
+.header-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Tabs */
+.tabs-container {
+  width: 100%;
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: thin;
+  scrollbar-color: #666 #333;
+  padding: 10px 10px 5px 10px;
+  margin-right: 50px;
+  text-align: center;
+}
+
+.tabs {
+  display: inline-flex;
+  gap: 0.7em;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+  min-width: min-content;
+}
+
+.tab {
+  border-radius: 5px;
+  padding: 0 0.5rem 0 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  background: rgba(255, 255, 255, 0.1);
+  position: relative;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  min-width: fit-content;
+  font-size: 16px;
+}
+
+.tab:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.tab.active {
+  background: rgba(255, 255, 255, 0.3);
+  font-weight: 500;
+}
+
+.tab.dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+}
+
+.tab.drag-over {
+  transition: none;
+}
+
+.tab.drag-over::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #666;
+}
+
+/* SetSettings Button */
+.setSettings {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 15px 10px 0;
+  border-radius: 50%;
+  transition: background 0.2s;
+  position: absolute;
+  right: 0;
+}
+
+/* Divider */
+.divider {
+  position: relative;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.divider.horizontal {
+  width: calc(100% - 20px);
+  height: 20px;
+  margin: 10px 10px 3px 10px;
+}
+
+.divider.horizontal::after {
+  content: "";
+  position: absolute;
+  top: 5px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #e0e0e0;
+}
+
+.divider.vertical {
+  width: 20px;
+  height: 112px;
+  margin: 10px 0 10px 0;
+}
+
+.divider.vertical::after {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #e0e0e0;
+}
+
+.divider:hover::after {
+  background: #999999;
+  transform: none;
+}
+
+.divider:hover {
+  transform: scale(1.05);
+}
+
+/* Shortcut Add Menu */
+.add-menu {
+  position: relative;
+}
+
+.add-menu-content {
+  display: none;
+  position: absolute;
+  bottom: 40px;
+  right: 0;
+  background: white;
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 5;
+  min-width: 160px;
+}
+
+.add-menu-content.show {
+  display: block;
+}
+
+.add-option {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.add-option:hover {
+  background: #f5f5f5;
+}
+
+.add-option svg {
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+}
+
+/* Search Box */
+.searchContainer {
+  width: 80%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 5px 0 5px 0;
+}
+
+.search-box {
+  height: 1.7rem;
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: white;
+  border-radius: 24px;
+  padding: 8px 15px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  gap: 5px;
+}
+
+#searchInput {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 16px;
+  padding: 10px;
+  background: transparent;
+}
+
+.clear-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 15px;
+  font-size: 16px;
+  outline: none;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  opacity: 0.8;
+}
+
+.clear-btn:hover {
+  opacity: 1;
+}
+
+.clear-btn.visible {
+  display: block;
+}
+
+.gemini-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 10px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+
+.gemini-btn:hover {
+  transform: scale(1.1);
+}
+
+.gemini-btn img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+/* Shortcut Settings Modal */
+.shortcut-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8f8f8;
+  border-radius: 8px;
+}
+
+.shortcut-preview img {
+  width: 64px;
+  height: 64px;
+}
+
+.shortcut-preview span {
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.shortcut-preview a {
+  color: #666;
+  font-size: 0.9rem;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ################################################################################################################################ */
+
+/* System-Mode*/
+@media (prefers-color-scheme: dark) {
+  /* Allgemeines */
+  body {
+    background: #1a1a1a;
+    color: #eee;
+  }
+
+  /* Dark Mode Scrollbar */
+  ::-webkit-scrollbar-track {
+    background: #2a2a2a;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #555;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #777;
+  }
+
+  /* Header */
+  header {
+    background: #111;
+    color: #eee;
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
+  }
+
+  /* Shortcuts */
+  .shortcut {
+    background: #111;
+    border: 1px solid #444;
+    color: #eee;
+    box-shadow: 0 2px 10px rgba(255, 255, 255, 0.3);
+  }
+
+  .shortcut:hover {
+    box-shadow: 0 5px 15px rgba(255, 255, 255, 0.3);
+  }
+
+  .shortcut::after {
+    background: #444;
+  }
+
+  .shortcut a {
+    color: #eee;
+  }
+
+  .shortcut.dragging {
+    color: #eee;
+  }
+
+  .shortcut.drag-over {
+    border: 2px dashed #666;
+    background: #222;
+  }
+
+  /* Divider */
+  .divider.horizontal::after,
+  .divider.vertical::after {
+    background: #444;
+  }
+
+  .divider:hover::after {
+    background: #666;
+  }
+
+  /* Modal-Inhalte */
+  .modal-content {
+    background: #333;
+    color: #eee;
+  }
+
+  .modal-content h2 {
+    color: #eee;
+  }
+
+  #settingsShortcutName {
+    color: #333;
+  }
+
+  .modal-section {
+    background: #444;
+  }
+
+  /* Texteingabefelder, Labels und Select-Boxen */
+  input[type="text"],
+  select {
+    color: #eee;
+    background: #444;
+    border: 2px solid #555;
+  }
+
+  label {
+    color: #eee;
+  }
+
+  /* Search Box */
+  .search-box {
+    background: #333;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  #searchInput {
+    background: transparent;
+  }
+
+  /* Buttons im Modal */
+  .modal-content button.save,
+  .modal-content button.delete,
+  .modal-content button.cancel {
+    color: #eee;
+    background: #555;
+    border: 2px solid #666;
+  }
+
+  .modal-content button.save:hover {
+    background: #666;
+    border-color: #777;
+  }
+
+  .modal-content button.delete:hover {
+    background: #a00;
+    border-color: #900;
+  }
+
+  .modal-content button.cancel:hover {
+    background: #777;
+    border-color: #888;
+  }
+}
+
+/* ############################################# */
+
+/* Light-Mode*/
+/* Allgemeines */
+body[data-theme="light-mode"] {
+  background-color: #f0f4f9;
+  color: #3c4043;
+}
+
+/* Light Mode Scrollbar */
+body[data-theme="light-mode"] ::-webkit-scrollbar-track {
+  background: #f0f4f9;
+}
+
+body[data-theme="light-mode"] ::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+}
+
+body[data-theme="light-mode"] ::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Header */
+body[data-theme="light-mode"] header {
+  background: #333;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
+}
+
+/* Shortcuts */
+body[data-theme="light-mode"] .shortcut {
+  background: #fff;
+  border: 1px solid #ddd;
+  color: #000000;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+body[data-theme="light-mode"] .shortcut:hover {
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+body[data-theme="light-mode"] .shortcut::after {
+  background: #f4f4f4;
+}
+
+body[data-theme="light-mode"] .shortcut a {
+  color: rgb(71, 71, 71);
+}
+
+body[data-theme="light-mode"] .shortcut.dragging {
+  color: #000000;
+}
+
+body[data-theme="light-mode"] .shortcut.drag-over {
+  border: 2px dashed #666;
+  background: #f8f8f8;
+}
+
+/* Divider */
+body[data-theme="light-mode"] .divider.horizontal::after,
+body[data-theme="light-mode"] .divider.vertical::after {
+  background: #e0e0e0;
+}
+
+body[data-theme="light-mode"] .divider:hover::after {
+  background: #999999;
+}
+
+/* Modal-Inhalte */
+body[data-theme="light-mode"] .modal-content {
+  background: #fff;
+  color: rgb(71, 71, 71);
+}
+
+body[data-theme="light-mode"] .modal-content h2 {
+  color: rgb(56, 56, 56);
+}
+
+body[data-theme="light-mode"] #settingsShortcutName {
+  color: rgb(56, 56, 56);
+}
+
+body[data-theme="light-mode"] .modal-section {
+  background: white;
+  box-shadow: 0px 0px 10px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Texteingabefelder, Labels und Select-Boxen */
+body[data-theme="light-mode"] input[type="text"],
+body[data-theme="light-mode"] select {
+  color: rgb(71, 71, 71);
+  background: #ffffff;
+  border: 2px solid #555;
+}
+
+body[data-theme="light-mode"] label {
+  color: rgb(71, 71, 71);
+}
+
+/* Search Box */
+body[data-theme="light-mode"] .search-box {
+  background-color: #ffffff;
+  border-radius: 28px;
+  box-shadow: 0 1px 6px rgba(32, 33, 36, 0.28);
+  transition: box-shadow 0.3s ease-in-out;
+}
+
+body[data-theme="light-mode"] .search-box:hover,
+body[data-theme="light-mode"] .search-box:focus-within {
+  box-shadow: 0 2px 8px rgba(32, 33, 36, 0.2);
+}
+
+body[data-theme="light-mode"] #searchInput {
+  color: #202124;
+}
+
+/* Buttons im Modal */
+body[data-theme="light-mode"] .clear-btn {
+  color: #70757a;
+}
+
+body[data-theme="light-mode"] .modal-content button.save {
+  background: #007bff;
+  color: white;
+  border: 2px solid #007bff;
+}
+
+body[data-theme="light-mode"] .modal-content button.save:hover {
+  background: #0069d9;
+  border-color: #0062cc;
+}
+
+body[data-theme="light-mode"] .modal-content button.delete {
+  background: #dd0c0c;
+  color: white;
+  border: 2px solid #dd0c0c;
+}
+
+body[data-theme="light-mode"] .modal-content button.delete:hover {
+  background: #c90b0b;
+  border-color: #c90b0b;
+}
+
+body[data-theme="light-mode"] .modal-content button.cancel {
+  background: #6c757d;
+  color: white;
+}
+
+body[data-theme="light-mode"] .modal-content button.cancel:hover {
+  background: #5a6268;
+  border-color: #545b62;
+}
+
+/* ############################################# */
+
+/* Dark-Mode */
+/* Allgemeines */
+body[data-theme="dark-mode"] {
+  background-color: #202124;
+  color: #e8eaed;
+}
+
+/* Header */
+body[data-theme="dark-mode"] header {
+  background: #111;
+  color: #eee;
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
+}
+
+/* Shortcuts */
+body[data-theme="dark-mode"] .shortcut {
+  background: #111;
+  border: 1px solid #444;
+  color: #eee;
+  box-shadow: 0 2px 10px rgba(255, 255, 255, 0.3);
+}
+
+body[data-theme="dark-mode"] .shortcut:hover {
+  box-shadow: 0 5px 15px rgba(255, 255, 255, 0.3);
+}
+
+body[data-theme="dark-mode"] .shortcut::after {
+  background: #444;
+}
+
+body[data-theme="dark-mode"] .shortcut a {
+  color: #eee;
+}
+
+body[data-theme="dark-mode"] .shortcut.dragging {
+  color: #eee;
+}
+
+body[data-theme="dark-mode"] .shortcut.drag-over {
+  border: 2px dashed #666;
+  background: #222;
+}
+
+/* Divider */
+body[data-theme="dark-mode"] .divider.horizontal::after,
+body[data-theme="dark-mode"] .divider.vertical::after {
+  background: #444;
+}
+
+body[data-theme="dark-mode"] .divider:hover::after {
+  background: #666;
+}
+
+/* Modal-Inhalte */
+body[data-theme="dark-mode"] .modal-content {
+  background: #333;
+  color: #eee;
+}
+
+body[data-theme="dark-mode"] .modal-content h2 {
+  color: #eee;
+}
+
+body[data-theme="dark-mode"] #settingsShortcutName {
+  color: #333;
+}
+
+body[data-theme="dark-mode"] .modal-section {
+  background: #444;
+}
+
+/* Texteingabefelder, Labels und Select-Boxen */
+body[data-theme="dark-mode"] input[type="text"],
+body[data-theme="dark-mode"] select {
+  color: #eee;
+  background: #444;
+  border: 2px solid #555;
+}
+
+body[data-theme="dark-mode"] label {
+  color: #eee;
+}
+
+/* Search Box */
+body[data-theme="dark-mode"] .search-box {
+  background-color: #303134;
+  border-radius: 28px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
+  transition: box-shadow 0.3s ease-in-out;
+}
+
+body[data-theme="dark-mode"] .search-box:hover,
+body[data-theme="dark-mode"] .search-box:focus-within {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+body[data-theme="dark-mode"] #searchInput {
+  color: #e8eaed;
+}
+
+/* Buttons im Modal */
+body[data-theme="dark-mode"] .clear-btn {
+  color: #9aa0a6;
+}
+
+body[data-theme="dark-mode"] .modal-content button.save,
+body[data-theme="dark-mode"] .modal-content button.delete,
+body[data-theme="dark-mode"] .modal-content button.cancel {
+  color: #eee;
+  background: #555;
+  border: 2px solid #666;
+}
+
+body[data-theme="dark-mode"] .modal-content button.save:hover {
+  background: #666;
+  border-color: #777;
+}
+
+body[data-theme="dark-mode"] .modal-content button.delete:hover {
+  background: #a00;
+  border-color: #900;
+}
+
+body[data-theme="dark-mode"] .modal-content button.cancel:hover {
+  background: #777;
+  border-color: #888;
+}
+
+/* ############################################# */
+
+/* 8bit-Mode */
+body[data-theme="eightbit-mode"] {
+  background: #001100;
+  color: #00ff00;
+  font-family: "8Bit", monospace;
+  position: relative;
+  text-shadow: 0 0 5px #00ff0080;
+  /* image-rendering: pixelated; */
+}
+
+/* CRT Screen Effect */
+body[data-theme="eightbit-mode"]::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0) 0,
+    rgba(0, 0, 0, 0.3) 50%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  pointer-events: none;
+  z-index: 9999;
+  animation: scanline 6s linear infinite;
+}
+
+@keyframes scanline {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+/* Header */
+body[data-theme="eightbit-mode"] header {
+  background: #002200 !important;
+  border-bottom: 3px solid #00ff00;
+  box-shadow: 0 0 15px #00ff0080;
+}
+
+/* Shortcuts */
+body[data-theme="eightbit-mode"] .shortcut {
+  background: #001100 !important;
+  border: 2px solid #00ff00 !important;
+  box-shadow: 0 0 10px #00ff0080 !important;
+}
+
+body[data-theme="eightbit-mode"] .shortcut a {
+  color: #00ff00 !important;
+  font-family: "8Bit", monospace;
+  font-size: 1.2rem;
+}
+
+body[data-theme="eightbit-mode"] .shortcut img {
+  filter: grayscale(100%) brightness(200%);
+}
+
+/* Tabs */
+body[data-theme="eightbit-mode"] .tab {
+  background: #002200 !important;
+  border: 1px solid #00ff00 !important;
+  color: #00ff00 !important;
+}
+
+body[data-theme="eightbit-mode"] .tab.active {
+  background: #004400 !important;
+  box-shadow: inset 0 0 10px #00ff0080;
+}
+
+/* Modal */
+body[data-theme="eightbit-mode"] .modal-content {
+  background: #001100 !important;
+  border: 3px solid #00ff00;
+  box-shadow: 0 0 20px #00ff0080;
+}
+
+body[data-theme="eightbit-mode"] .modal-section {
+  background: #002200 !important;
+  border: 2px dashed #00ff00;
+}
+
+body[data-theme="eightbit-mode"] input[type="text"],
+body[data-theme="eightbit-mode"] select {
+  background: #001100 !important;
+  border: 2px solid #00ff00 !important;
+  color: #00ff00 !important;
+  font-family: "8Bit", monospace;
+}
+
+body[data-theme="eightbit-mode"] .modal-content button {
+  font-family: "8Bit", monospace;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+body[data-theme="eightbit-mode"] .modal-content button.save {
+  background: #004400 !important;
+  border: 2px solid #00ff00 !important;
+}
+
+body[data-theme="eightbit-mode"] .modal-content button.delete {
+  background: #440000 !important;
+  border: 2px solid #ff0000 !important;
+}
+
+/* Search Box */
+body[data-theme="eightbit-mode"] .search-box {
+  background: #001100 !important;
+  border: 2px #00ff00 !important;
+}
+
+body[data-theme="eightbit-mode"] #searchInput {
+  color: #00ff00 !important;
+}
+
+body[data-theme="eightbit-mode"] .clear-btn {
+  color: #00ff00;
+}
+
+/* Divider */
+body[data-theme="eightbit-mode"] .divider::after {
+  background: #00ff00 !important;
+  opacity: 0.6;
+}
+
+@keyframes cursor-pulse {
+  0% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 0.8;
+  }
+}
+
+/* 8bit-Mode Cursor Styles */
+body[data-theme="eightbit-mode"] {
+  cursor:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect width='12' height='12' x='2' y='2' fill='%2300ff00'/%3E%3Crect x='10' y='10' width='6' height='6' fill='%2300ff00'/%3E%3C/svg%3E")
+      8 8,
+    pointer !important;
+  animation: cursor-pulse 5s infinite;
+}
+
+/* Hover-Zustand für Zeigefinger */
+body[data-theme="eightbit-mode"] a:hover,
+body[data-theme="eightbit-mode"] button:hover,
+body[data-theme="eightbit-mode"] .shortcut:hover,
+body[data-theme="eightbit-mode"] [onclick]:hover,
+body[data-theme="eightbit-mode"] .tab:hover,
+body[data-theme="eightbit-mode"] .divider:hover {
+  cursor:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect width='12' height='12' x='2' y='2' fill='%23ff0000'/%3E%3Crect x='10' y='10' width='6' height='6' fill='%23ff0000'/%3E%3C/svg%3E")
+      8 8,
+    pointer !important;
+}
+
+/* Zeigefinger-Ersatz für klickbare Elemente */
+body[data-theme="eightbit-mode"] a,
+body[data-theme="eightbit-mode"] button,
+body[data-theme="eightbit-mode"] .shortcut,
+body[data-theme="eightbit-mode"] [onclick] {
+  cursor:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect width='12' height='12' x='2' y='2' fill='%2300ff00'/%3E%3Crect x='10' y='10' width='6' height='6' fill='%2300ff00'/%3E%3C/svg%3E")
+      8 8,
+    pointer !important;
+}
+
+/* Active/Clicked State */
+body[data-theme="eightbit-mode"] a:active,
+body[data-theme="eightbit-mode"] button:active {
+  cursor:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect width='12' height='12' x='2' y='2' fill='%2300ff00'/%3E%3Crect x='10' y='10' width='6' height='6' fill='%2300ff00'/%3E%3C/svg%3E")
+      8 8,
+    pointer !important;
+}
+
+/* Input Fields */
+body[data-theme="eightbit-mode"] input,
+body[data-theme="eightbit-mode"] textarea {
+  cursor:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect width='8' height='14' x='4' y='1' fill='%2300ff00' stroke='%2300ff00' stroke-width='2'/%3E%3C/svg%3E")
+      8 8,
+    text !important;
+}
+
+/* Drag & Drop */
+body[data-theme="eightbit-mode"] .draggable {
+  cursor:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect width='14' height='14' x='1' y='1' fill='%23ffff00' stroke='%23fff' stroke-width='2'/%3E%3C/svg%3E")
+      8 8,
+    grab !important;
+}
+
+/* Loading State */
+body[data-theme="eightbit-mode"] .loading {
+  cursor:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect width='14' height='14' x='1' y='1' fill='%23ff00ff' stroke='%23fff' stroke-width='2'/%3E%3C/svg%3E")
+      8 8,
+    progress !important;
+}
+
+/* Disabled State */
+body[data-theme="eightbit-mode"] :disabled {
+  cursor:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect width='14' height='14' x='1' y='1' fill='%23666' stroke='%23fff' stroke-width='2'/%3E%3C/svg%3E")
+      8 8,
+    not-allowed !important;
+}
+
+/* ############################################# */
+
+/* Minimal-Mode */
+/* Allgemeines */
+body[data-theme="minimal-mode"] {
+  background: #111;
+  color: #eee;
+}
+
+/* Header */
+body[data-theme="minimal-mode"] header {
+  background: #111;
+  color: #eee;
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
+}
+
+/* Shortcuts */
+body[data-theme="minimal-mode"] .shortcut {
+  background: #111;
+  border: 0;
+  color: #eee;
+  box-shadow: 0 0 0 rgba(255, 255, 255, 0);
+}
+
+body[data-theme="minimal-mode"] .shortcut:hover {
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0);
+}
+
+body[data-theme="minimal-mode"] .shortcut::after {
+  background: #444;
+}
+
+body[data-theme="minimal-mode"] .shortcut img {
+  filter: grayscale(100%) brightness(100%);
+}
+
+body[data-theme="minimal-mode"] .shortcut a {
+  color: #eee;
+}
+
+body[data-theme="minimal-mode"] .shortcut.dragging {
+  color: #eee;
+}
+
+body[data-theme="minimal-mode"] .shortcut.drag-over {
+  border: 2px dashed #666;
+  background: #222;
+}
+
+body[data-theme="minimal-mode"] .edit-btn {
+  background-color: #111;
+  color: #eee;
+}
+
+/* Divider */
+body[data-theme="minimal-mode"] .divider:hover {
+  transform: scale(1);
+}
+
+body[data-theme="minimal-mode"] .divider.horizontal::after,
+body[data-theme="minimal-mode"] .divider.vertical::after {
+  background: #333;
+}
+
+body[data-theme="minimal-mode"] .divider:hover::after {
+  background: #444;
+}
+
+/* Modal-Inhalte */
+body[data-theme="minimal-mode"] .modal-content {
+  background: #333;
+  color: #eee;
+}
+
+body[data-theme="minimal-mode"] .modal-content h2 {
+  color: #eee;
+}
+
+body[data-theme="minimal-mode"] #settingsShortcutName {
+  color: #333;
+}
+
+body[data-theme="minimal-mode"] .modal-section {
+  background: #444;
+}
+
+/* Texteingabefelder, Labels und Select-Boxen */
+body[data-theme="minimal-mode"] input[type="text"],
+body[data-theme="minimal-mode"] select {
+  color: #eee;
+  background: #444;
+  border: 2px solid #555;
+}
+
+body[data-theme="minimal-mode"] label {
+  color: #eee;
+}
+
+/* Search Box */
+body[data-theme="minimal-mode"] .search-box {
+  background-color: #333;
+  border: 2px solid #333;
+  border-radius: 6px;
+  box-shadow: none;
+}
+
+body[data-theme="minimal-mode"] #searchInput {
+  background: transparent;
+}
+
+/* Felder im Modal */
+body[data-theme="minimal-mode"] .modal-section input[type="text"] {
+  border-color: #666;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(102, 102, 102, 0.1);
+}
+
+body[data-theme="minimal-mode"] .modal-section input[type="text"]:focus {
+  border-color: #eee;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(102, 102, 102, 0.1);
+}
+
+body[data-theme="minimal-mode"] .modal-section select {
+  width: 100%;
+  margin-top: 5px;
+  padding: 10px 15px;
+  border: 2px solid #666;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+}
+
+body[data-theme="minimal-mode"] .modal-section select:focus {
+  border-color: #ddd;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(102, 102, 102, 0.1);
+}
+
+body[data-theme="minimal-mode"] .shortcut-preview {
+  background-color: #333;
+}
+
+body[data-theme="minimal-mode"] #settingsShortcutName {
+  color: #eee;
+}
+
+body[data-theme="minimal-mode"] .shortcut-preview a {
+  color: #888;
+}
+
+/* Buttons im Modal */
+body[data-theme="minimal-mode"] .clear-btn {
+  color: #000000;
+}
+
+body[data-theme="minimal-mode"] .modal-content button.save,
+body[data-theme="minimal-mode"] .modal-content button.delete {
+  color: #eee;
+  background: #333;
+  border: 2px solid #333;
+}
+
+body[data-theme="minimal-mode"] .modal-content button.cancel {
+  color: #eee;
+  background: #444;
+  border: 2px solid #444;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+body[data-theme="minimal-mode"] .modal-content button.save:hover {
+  background: #333;
+  border-color: #666;
+}
+
+body[data-theme="minimal-mode"] .modal-content button.delete:hover {
+  background: #a00;
+  border-color: #666;
+}
+
+body[data-theme="minimal-mode"] .modal-content button.cancel:hover {
+  background: #444;
+  border-color: #666;
+}
+
+/* Tabs */
+body[data-theme="minimal-mode"] .tab {
+  background: rgba(255, 255, 255, 0);
+}
+
+body[data-theme="minimal-mode"] .tab:hover {
+  background: rgb(51, 51, 51, 0.5);
+}
+
+body[data-theme="minimal-mode"] .tab.active {
+  background: rgb(51, 51, 51);
+  font-weight: 500;
+}
+
+/* Catppuccin Mocha Theme */
+body[data-theme="catppuccin-mocha"] {
+  background-color: #1e1e2e; /* Base */
+  color: #cdd6f4; /* Text */
+}
+
+body[data-theme="catppuccin-mocha"] header {
+  background: #181825; /* Mantle */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+body[data-theme="catppuccin-mocha"] .tab {
+  background: rgba(137, 180, 250, 0.1); /* Blue opacity */
+  color: #cdd6f4;
+}
+
+body[data-theme="catppuccin-mocha"] .tab.active {
+  background: #89b4fa; /* Blue */
+  color: #11111b; /* Crust */
+}
+
+body[data-theme="catppuccin-mocha"] .shortcut {
+  background: #313244; /* Surface0 */
+  border: 1px solid #45475a; /* Surface1 */
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+
+body[data-theme="catppuccin-mocha"] .shortcut a {
+  color: #89b4fa; /* Blue */
+}
+
+body[data-theme="catppuccin-mocha"] .search-box {
+  background: #313244;
+  color: #cdd6f4;
+}
+
+body[data-theme="catppuccin-mocha"] #searchInput {
+  color: #cdd6f4;
+}
+
+body[data-theme="catppuccin-mocha"] .modal-content {
+  background: #1e1e2e;
+  color: #cdd6f4;
+}
+
+body[data-theme="catppuccin-mocha"] .modal-section {
+  background: #313244;
+  box-shadow: 0px 0px 10px 2px rgba(0, 0, 0, 0.5);
+}
+
+body[data-theme="catppuccin-mocha"] label,
+body[data-theme="catppuccin-mocha"] .modalTitle {
+  color: #fab387; /* Peach */
+}
+
+body[data-theme="catppuccin-mocha"] .modal-content h2 {
+  color: #cba6f7; /* Mauve */
+  border-bottom-color: #45475a;
+}
+
+body[data-theme="catppuccin-mocha"] button.save {
+  background: #a6e3a1; /* Green */
+  color: #11111b;
+  border: none;
+}
+
+body[data-theme="catppuccin-mocha"] button.cancel {
+  background: #585b70; /* Surface2 */
+  color: #cdd6f4;
+  border: none;
+}
