@@ -1,10 +1,122 @@
+/* ==========================================================================
+   Base / Reset
+   ========================================================================== */
 body {
   font-family: Arial, sans-serif;
   margin: 0;
   padding: 0;
+  background: var(--bg);
+  color: var(--text);
   transition:
-    background-color 0.3s,
-    color 0.3s;
+          background-color 0.3s,
+          color 0.3s;
+}
+
+/* Fallback-Variablen, bevor script.js das gespeicherte Theme setzt
+   (verhindert Flash of Unstyled Content beim Laden) */
+:root {
+  --bg: #f0f4f9;
+  --text: #3c4043;
+  --accent: #007bff;
+  --scrollbar-track: #f0f4f9;
+  --scrollbar-thumb: #c1c1c1;
+  --scrollbar-thumb-hover: #a8a8a8;
+  --header-bg: #333;
+  --header-text: #fff;
+  --header-shadow: rgba(255, 255, 255, 0.15);
+  --tab-bg: rgba(255, 255, 255, 0.1);
+  --tab-hover-bg: rgba(255, 255, 255, 0.2);
+  --tab-active-bg: rgba(255, 255, 255, 0.3);
+  --tab-text: var(--header-text);
+  --shortcut-bg: #fff;
+  --shortcut-border: #ddd;
+  --shortcut-text: #000000;
+  --shortcut-link-color: rgb(71, 71, 71);
+  --shortcut-shadow: rgba(0, 0, 0, 0.3);
+  --shortcut-img-filter: none;
+  --shortcut-dragover-border: #666;
+  --shortcut-dragover-bg: #f8f8f8;
+  --divider-color: #e0e0e0;
+  --divider-hover-color: #999999;
+  --modal-bg: #fff;
+  --modal-text: rgb(71, 71, 71);
+  --modal-heading-color: rgb(56, 56, 56);
+  --modal-heading-border: #eee;
+  --modal-section-bg: #fff;
+  --modal-section-shadow: rgba(0, 0, 0, 0.3);
+  --input-bg: #ffffff;
+  --input-text: rgb(71, 71, 71);
+  --input-border: #555;
+  --label-color: rgb(71, 71, 71);
+  --search-bg: #ffffff;
+  --search-text: #202124;
+  --search-shadow: rgba(32, 33, 36, 0.28);
+  --search-radius: 28px;
+  --clear-btn-color: #70757a;
+  --btn-save-bg: #007bff;
+  --btn-save-border: #007bff;
+  --btn-save-text: #fff;
+  --btn-save-hover-bg: #0069d9;
+  --btn-save-hover-border: #0062cc;
+  --btn-delete-bg: #dd0c0c;
+  --btn-delete-border: #dd0c0c;
+  --btn-delete-text: #fff;
+  --btn-delete-hover-bg: #c90b0b;
+  --btn-delete-hover-border: #c90b0b;
+  --btn-cancel-bg: #6c757d;
+  --btn-cancel-border: #6c757d;
+  --btn-cancel-text: #fff;
+  --btn-cancel-hover-bg: #5a6268;
+  --btn-cancel-hover-border: #545b62;
+  --shortcut-preview-bg: #f8f8f8;
+  --shortcut-preview-link-color: #666;
+  --info-box-bg: rgba(0, 123, 255, 0.1);
+  --info-box-border: rgba(0, 123, 255, 0.3);
+  --info-box-text: #000000;
+}
+
+/* System-Fallback (nur relevant, bevor das gespeicherte Theme greift) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #eee;
+    --scrollbar-track: #2a2a2a;
+    --scrollbar-thumb: #555;
+    --scrollbar-thumb-hover: #777;
+    --header-bg: #111;
+    --header-shadow: rgba(255, 255, 255, 0.15);
+    --shortcut-bg: #111;
+    --shortcut-border: #444;
+    --shortcut-text: #eee;
+    --shortcut-link-color: #eee;
+    --shortcut-shadow: rgba(255, 255, 255, 0.3);
+    --shortcut-dragover-border: #666;
+    --shortcut-dragover-bg: #222;
+    --divider-color: #444;
+    --divider-hover-color: #666;
+    --modal-bg: #333;
+    --modal-text: #eee;
+    --modal-heading-color: #eee;
+    --modal-section-bg: #444;
+    --input-bg: #444;
+    --input-text: #eee;
+    --input-border: #555;
+    --label-color: #eee;
+    --search-bg: #333;
+    --search-text: #eee;
+    --btn-save-bg: #555;
+    --btn-save-border: #666;
+    --btn-save-hover-bg: #666;
+    --btn-save-hover-border: #777;
+    --btn-delete-bg: #555;
+    --btn-delete-border: #666;
+    --btn-delete-hover-bg: #a00;
+    --btn-delete-hover-border: #900;
+    --btn-cancel-bg: #555;
+    --btn-cancel-border: #666;
+    --btn-cancel-hover-bg: #777;
+    --btn-cancel-hover-border: #888;
+  }
 }
 
 /* Scrollbar Styling */
@@ -14,23 +126,49 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--scrollbar-track);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #888;
+  background: var(--scrollbar-thumb);
   border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* ==========================================================================
+   Header / Navigation
+   ========================================================================== */
+header {
+  background: var(--header-bg);
+  color: var(--header-text);
+  text-align: center;
+  padding: 10px;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 12px var(--header-shadow);
+}
+
+.header-row {
+  display: flex;
+  position: relative;
+  width: 100%;
+}
+
+.header-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 /* Settings Button */
 .settings {
   background: none;
   border: none;
-  color: white;
+  color: var(--header-text);
   font-size: 1.5rem;
   cursor: pointer;
   padding: 12px 10px 0 0;
@@ -40,7 +178,213 @@ body {
   right: 0;
 }
 
-/* Shortcuts */
+/* SetSettings Button */
+.setSettings {
+  background: none;
+  border: none;
+  color: var(--header-text);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 15px 10px 0;
+  border-radius: 50%;
+  transition: background 0.2s;
+  position: absolute;
+  right: 0;
+}
+
+/* Tabs */
+.tabs-container {
+  width: 100%;
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--header-bg);
+  padding: 10px 10px 5px 10px;
+  text-align: center;
+}
+
+.tabs {
+  display: inline-flex;
+  gap: 0.7em;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+  min-width: min-content;
+}
+
+.tab {
+  border-radius: 5px;
+  padding: 0 0.5rem 0 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--tab-bg);
+  color: var(--tab-text);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  min-width: fit-content;
+  font-size: 16px;
+}
+
+.tab:hover {
+  background: var(--tab-hover-bg);
+}
+
+.tab.active {
+  background: var(--tab-active-bg);
+  font-weight: 500;
+}
+
+.tab.dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+}
+
+.tab.drag-over {
+  transition: none;
+}
+
+.tab.drag-over::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--divider-hover-color);
+}
+
+/* ==========================================================================
+   Search Box / Quick Access Bar
+   ========================================================================== */
+.searchContainer {
+  width: 80%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 5px 0 5px 0;
+}
+
+.search-box {
+  height: 1.7rem;
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--search-bg);
+  border-radius: var(--search-radius, 24px);
+  padding: 8px 15px;
+  box-shadow: 0 1px 6px var(--search-shadow, rgba(0, 0, 0, 0.1));
+  gap: 5px;
+  transition: box-shadow 0.3s ease-in-out;
+}
+
+.search-box:hover,
+.search-box:focus-within {
+  box-shadow: 0 2px 8px var(--search-shadow, rgba(0, 0, 0, 0.2));
+}
+
+#searchInput {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 16px;
+  padding: 10px;
+  background: transparent;
+  color: var(--search-text);
+}
+
+.clear-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 15px;
+  font-size: 16px;
+  outline: none;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  opacity: 0.8;
+  color: var(--clear-btn-color);
+}
+
+.clear-btn:hover {
+  opacity: 1;
+}
+
+.clear-btn.visible {
+  display: block;
+}
+
+.gemini-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 10px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+
+.gemini-btn:hover {
+  transform: scale(1.1);
+}
+
+.gemini-btn img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+/* Quick-Access-Leiste (Meistgenutzt / Zuletzt genutzt / Kombiniert)
+   min-height statt display:none im Leerzustand: reserviert den Platz
+   dauerhaft, damit das Layout beim Ein-/Ausblenden von Items oder beim
+   ersten Laden (noch keine Nutzung getrackt) nicht springt. overflow:
+   hidden statt scroll — Items, die nicht mehr reinpassen, werden von
+   fitQuickAccessItems() in script.js komplett ausgeblendet statt
+   abgeschnitten oder scrollbar gemacht. */
+.quick-access-bar {
+  display: flex;
+  flex: 1; /* füllt die Breite von .header-row, sonst wirkt "center" wie left */
+  flex-wrap: nowrap;
+  gap: 0.6rem;
+  overflow: hidden;
+  padding: 0.4rem 1rem 0.6rem;
+  justify-content: center;
+  min-height: 44px;
+  box-sizing: border-box;
+}
+
+.quick-access-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 20px;
+  background: var(--search-bg);
+  color: var(--search-text);
+  box-shadow: 0 1px 4px var(--search-shadow, rgba(0, 0, 0, 0.15));
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  transition: transform 0.15s;
+}
+
+.quick-access-item:hover {
+  transform: translateY(-2px);
+}
+
+.quick-access-item img {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  filter: var(--shortcut-img-filter);
+}
+
+/* ==========================================================================
+   Shortcuts
+   ========================================================================== */
 .container {
   display: flex;
   flex-wrap: wrap;
@@ -48,32 +392,11 @@ body {
   padding: 1rem;
 }
 
-.add-tile {
-  font-size: 48px;
-  color: #aaa;
-  font-weight: bold;
-}
-
-.shortcutSettings-btn {
-  display: none;
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  background: rgba(255, 255, 255, 0.8);
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  padding: 5px;
-  font-size: 14px;
-  line-height: 1;
-  z-index: 2;
-  pointer-events: auto !important;
-}
-
 .shortcut {
   position: relative;
-  background: #fff;
-  border: 1px solid #ddd;
+  background: var(--shortcut-bg);
+  border: 1px solid var(--shortcut-border);
+  color: var(--shortcut-text);
   border-radius: 15px;
   margin: 0.5rem;
   width: 112px;
@@ -83,17 +406,18 @@ body {
   align-items: center;
   justify-content: center;
   text-align: center;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 10px var(--shortcut-shadow);
   overflow: hidden;
   cursor: pointer;
 }
 
 .shortcut:hover {
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 5px 15px var(--shortcut-shadow);
 }
 
-.shortcut:hover .shortcutSettings-btn {
-  display: block;
+.shortcut:hover .shortcutSettings-btn,
+.shortcut:hover .edit-btn {
+  display: block !important;
 }
 
 .shortcut.active {
@@ -104,11 +428,12 @@ body {
   width: 48px;
   height: 48px;
   border-radius: 15px;
+  filter: var(--shortcut-img-filter);
 }
 
 .shortcut a {
   text-decoration: none;
-  color: #333;
+  color: var(--shortcut-link-color);
   font-weight: bold;
   display: block;
   margin-top: 10px;
@@ -118,44 +443,21 @@ body {
 .shortcut.dragging {
   opacity: 0.5;
   cursor: grabbing;
-}
-
-/* Info Box */
-.info-box {
-  background: rgba(0, 123, 255, 0.1);
-  border: 1px solid rgba(0, 123, 255, 0.3);
-  border-radius: 8px;
-  padding: 12px;
-  margin: 10px 0;
-  font-size: 14px;
-  line-height: 1.4;
-}
-
-[data-theme="light-mode"] .info-box p {
-  margin: 0;
-  color: #000000;
-}
-
-[data-theme="dark-mode"] .info-box p {
-  margin: 0;
-  color: #ffffff;
-}
-
-[data-theme="dark-mode"] .info-box {
-  background: rgba(0, 123, 255, 0.2);
-  border-color: rgba(0, 123, 255, 0.5);
-}
-
-[data-theme="dark-mode"] .info-box p {
-  color: #66b3ff;
+  color: var(--shortcut-text);
 }
 
 .shortcut.drag-over {
-  border: 2px dashed #666;
-  background: #f8f8f8;
+  border: 2px dashed var(--shortcut-dragover-border);
+  background: var(--shortcut-dragover-bg);
 }
 
-/* Shortcut Settings Button */
+.add-tile {
+  font-size: 48px;
+  color: #aaa;
+  font-weight: bold;
+}
+
+.shortcutSettings-btn,
 .edit-btn {
   display: none;
   position: absolute;
@@ -169,6 +471,10 @@ body {
   font-size: 14px;
   line-height: 1;
   z-index: 2;
+  pointer-events: auto !important;
+}
+
+.edit-btn {
   opacity: 0.5;
   transition: opacity 0.2s;
 }
@@ -176,27 +482,16 @@ body {
 .edit-btn:hover {
   opacity: 1;
   background: #eee;
-  display: block !important;
 }
 
-.shortcut:hover .edit-btn {
-  display: block !important;
-}
-
-/* Shortcut Settings Modal */
 .shortcutSettings-btn {
-  display: none;
-  position: absolute;
   top: 30px;
-  right: 5px;
   background: #fff;
   border: 1px solid #ccc;
-  border-radius: 5px;
   padding: 5px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
   z-index: 3;
   width: 90px;
-  pointer-events: auto;
 }
 
 .shortcutSettings-btn button {
@@ -214,7 +509,100 @@ body {
   background: #ddd;
 }
 
-/* Modal */
+/* Shortcut Add Menu */
+.add-menu {
+  position: relative;
+}
+
+.add-menu-content {
+  display: none;
+  position: absolute;
+  bottom: 40px;
+  right: 0;
+  background: var(--modal-bg);
+  color: var(--modal-text);
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 5;
+  min-width: 160px;
+}
+
+.add-menu-content.show {
+  display: block;
+}
+
+.add-option {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.add-option:hover {
+  background: rgba(128, 128, 128, 0.15);
+}
+
+.add-option svg {
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+}
+
+/* ==========================================================================
+   Divider
+   ========================================================================== */
+.divider {
+  position: relative;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.divider.horizontal {
+  width: calc(100% - 20px);
+  height: 20px;
+  margin: 10px 10px 3px 10px;
+}
+
+.divider.horizontal::after {
+  content: "";
+  position: absolute;
+  top: 5px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--divider-color);
+}
+
+.divider.vertical {
+  width: 20px;
+  height: 112px;
+  margin: 10px 0 10px 0;
+}
+
+.divider.vertical::after {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--divider-color);
+}
+
+.divider:hover::after {
+  background: var(--divider-hover-color);
+}
+
+.divider:hover {
+  transform: scale(1.05);
+}
+
+/* ==========================================================================
+   Modal
+   ========================================================================== */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -229,7 +617,8 @@ body {
 }
 
 .modal-content {
-  background: #fff;
+  background: var(--modal-bg);
+  color: var(--modal-text);
   padding: 25px;
   border-radius: 8px;
   width: 400px;
@@ -247,10 +636,10 @@ body {
 }
 
 .modal-content h2 {
-  color: rgb(56, 56, 56);
+  color: var(--modal-heading-color);
   margin: 0 0 1.5rem 0;
   font-size: 1.5rem;
-  border-bottom: 2px solid #eee;
+  border-bottom: 2px solid var(--modal-heading-border);
   padding-bottom: 0.5rem;
   text-align: left;
 }
@@ -258,48 +647,56 @@ body {
 .modal-section {
   padding: 1.5rem;
   margin-bottom: 1.5rem;
-  background: white;
+  background: var(--modal-section-bg);
   border-radius: 8px;
-  box-shadow: 0px 0px 10px 2px rgba(0, 0, 0, 0.3);
+  box-shadow: 0px 0px 10px 2px var(--modal-section-shadow, rgba(0, 0, 0, 0.3));
 }
 
 label {
   display: block;
-  color: rgb(71, 71, 71);
+  color: var(--label-color);
   font-size: 0.95rem;
   font-weight: 500;
   margin: 0.8rem 0 0.2rem 0;
 }
 
+/* Info Box */
+.info-box {
+  background: var(--info-box-bg);
+  border: 1px solid var(--info-box-border);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 10px 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.info-box p {
+  margin: 0;
+  color: var(--info-box-text);
+}
+
 /* Modal Input Fields */
-.modal-section input[type="text"] {
+.modal-section input[type="text"],
+.modal-section select {
   width: 90%;
   margin-top: 5px;
   padding: 10px 15px;
-  border: 2px solid #ddd;
+  border: 2px solid var(--input-border);
   border-radius: 6px;
   font-size: 14px;
+  background: var(--input-bg);
+  color: var(--input-text);
   transition: border-color 0.3s ease;
-}
-
-.modal-section input[type="text"]:focus {
-  border-color: #007bff;
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
 }
 
 .modal-section select {
   width: 100%;
-  margin-top: 5px;
-  padding: 10px 15px;
-  border: 2px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
-  transition: border-color 0.3s ease;
 }
 
+.modal-section input[type="text"]:focus,
 .modal-section select:focus {
-  border-color: #007bff;
+  border-color: var(--accent);
   outline: none;
   box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
 }
@@ -343,308 +740,40 @@ label {
 }
 
 .modal-content button.save {
-  background: #007bff;
-  color: white;
-  border: 2px solid #007bff;
-  padding: 10px 20px;
-  border-radius: 6px;
-  font-weight: 500;
+  background: var(--btn-save-bg);
+  color: var(--btn-save-text);
+  border: 2px solid var(--btn-save-border);
   width: 100%;
 }
 
 .modal-content button.save:hover {
-  background: #0069d9;
-  border-color: #0062cc;
+  background: var(--btn-save-hover-bg);
+  border-color: var(--btn-save-hover-border);
 }
 
 .modal-content button.delete {
-  background: #dd0c0c;
-  color: white;
-  border: 2px solid #dd0c0c;
-  padding: 10px 20px;
-  border-radius: 6px;
-  font-weight: 500;
+  background: var(--btn-delete-bg);
+  color: var(--btn-delete-text);
+  border: 2px solid var(--btn-delete-border);
   width: 100%;
 }
 
 .modal-content button.delete:hover {
-  background: #c90b0b;
-  border-color: #c90b0b;
+  background: var(--btn-delete-hover-bg);
+  border-color: var(--btn-delete-hover-border);
 }
 
 .modal-content button.cancel {
   margin-left: auto;
   margin-right: 1.5rem;
-  background: #6c757d;
-  color: white;
-  border: 2px solid #6c757d;
+  background: var(--btn-cancel-bg);
+  color: var(--btn-cancel-text);
+  border: 2px solid var(--btn-cancel-border);
 }
 
 .modal-content button.cancel:hover {
-  background: #5a6268;
-  border-color: #545b62;
-}
-
-/* Navigation Bar */
-header {
-  background: #333;
-  color: #fff;
-  text-align: center;
-  padding: 10px;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.5rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.header-row {
-  display: flex;
-  position: relative;
-  width: 100%;
-}
-
-.header-group {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-/* Tabs */
-.tabs-container {
-  width: 100%;
-  overflow-x: auto;
-  white-space: nowrap;
-  scrollbar-width: thin;
-  scrollbar-color: #666 #333;
-  padding: 10px 10px 5px 10px;
-  margin-right: 50px;
-  text-align: center;
-}
-
-.tabs {
-  display: inline-flex;
-  gap: 0.7em;
-  margin: 0 auto;
-  padding: 0;
-  list-style: none;
-  min-width: min-content;
-}
-
-.tab {
-  border-radius: 5px;
-  padding: 0 0.5rem 0 0.5rem;
-  cursor: pointer;
-  transition: background 0.2s;
-  background: rgba(255, 255, 255, 0.1);
-  position: relative;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 40px;
-  min-width: fit-content;
-  font-size: 16px;
-}
-
-.tab:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.tab.active {
-  background: rgba(255, 255, 255, 0.3);
-  font-weight: 500;
-}
-
-.tab.dragging {
-  opacity: 0.5;
-  cursor: grabbing;
-}
-
-.tab.drag-over {
-  transition: none;
-}
-
-.tab.drag-over::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: #666;
-}
-
-/* SetSettings Button */
-.setSettings {
-  background: none;
-  border: none;
-  color: white;
-  font-size: 1.5rem;
-  cursor: pointer;
-  padding: 15px 10px 0;
-  border-radius: 50%;
-  transition: background 0.2s;
-  position: absolute;
-  right: 0;
-}
-
-/* Divider */
-.divider {
-  position: relative;
-  transition: all 0.2s;
-  cursor: pointer;
-}
-
-.divider.horizontal {
-  width: calc(100% - 20px);
-  height: 20px;
-  margin: 10px 10px 3px 10px;
-}
-
-.divider.horizontal::after {
-  content: "";
-  position: absolute;
-  top: 5px;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: #e0e0e0;
-}
-
-.divider.vertical {
-  width: 20px;
-  height: 112px;
-  margin: 10px 0 10px 0;
-}
-
-.divider.vertical::after {
-  content: "";
-  position: absolute;
-  left: 5px;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: #e0e0e0;
-}
-
-.divider:hover::after {
-  background: #999999;
-  transform: none;
-}
-
-.divider:hover {
-  transform: scale(1.05);
-}
-
-/* Shortcut Add Menu */
-.add-menu {
-  position: relative;
-}
-
-.add-menu-content {
-  display: none;
-  position: absolute;
-  bottom: 40px;
-  right: 0;
-  background: white;
-  border-radius: 12px;
-  padding: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 5;
-  min-width: 160px;
-}
-
-.add-menu-content.show {
-  display: block;
-}
-
-.add-option {
-  display: flex;
-  align-items: center;
-  padding: 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.add-option:hover {
-  background: #f5f5f5;
-}
-
-.add-option svg {
-  width: 20px;
-  height: 20px;
-  margin-right: 10px;
-}
-
-/* Search Box */
-.searchContainer {
-  width: 80%;
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 5px 0 5px 0;
-}
-
-.search-box {
-  height: 1.7rem;
-  position: relative;
-  display: flex;
-  align-items: center;
-  background: white;
-  border-radius: 24px;
-  padding: 8px 15px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  gap: 5px;
-}
-
-#searchInput {
-  flex: 1;
-  border: none;
-  outline: none;
-  font-size: 16px;
-  padding: 10px;
-  background: transparent;
-}
-
-.clear-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0 15px;
-  font-size: 16px;
-  outline: none;
-  display: flex;
-  align-items: center;
-  height: 100%;
-  opacity: 0.8;
-}
-
-.clear-btn:hover {
-  opacity: 1;
-}
-
-.clear-btn.visible {
-  display: block;
-}
-
-.gemini-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0 10px 0 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.2s;
-}
-
-.gemini-btn:hover {
-  transform: scale(1.1);
-}
-
-.gemini-btn img {
-  width: 24px;
-  height: 24px;
-  object-fit: contain;
+  background: var(--btn-cancel-hover-bg);
+  border-color: var(--btn-cancel-hover-border);
 }
 
 /* Shortcut Settings Modal */
@@ -654,7 +783,7 @@ header {
   align-items: center;
   gap: 1rem;
   padding: 1rem;
-  background: #f8f8f8;
+  background: var(--shortcut-preview-bg);
   border-radius: 8px;
 }
 
@@ -666,444 +795,371 @@ header {
 .shortcut-preview span {
   font-weight: bold;
   font-size: 1.2rem;
+  color: var(--modal-text);
 }
 
 .shortcut-preview a {
-  color: #666;
+  color: var(--shortcut-preview-link-color);
   font-size: 0.9rem;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* ################################################################################################################################ */
-
-/* System-Mode*/
-@media (prefers-color-scheme: dark) {
-  /* Allgemeines */
-  body {
-    background: #1a1a1a;
-    color: #eee;
-  }
-
-  /* Dark Mode Scrollbar */
-  ::-webkit-scrollbar-track {
-    background: #2a2a2a;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: #555;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: #777;
-  }
-
-  /* Header */
-  header {
-    background: #111;
-    color: #eee;
-    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
-  }
-
-  /* Shortcuts */
-  .shortcut {
-    background: #111;
-    border: 1px solid #444;
-    color: #eee;
-    box-shadow: 0 2px 10px rgba(255, 255, 255, 0.3);
-  }
-
-  .shortcut:hover {
-    box-shadow: 0 5px 15px rgba(255, 255, 255, 0.3);
-  }
-
-  .shortcut::after {
-    background: #444;
-  }
-
-  .shortcut a {
-    color: #eee;
-  }
-
-  .shortcut.dragging {
-    color: #eee;
-  }
-
-  .shortcut.drag-over {
-    border: 2px dashed #666;
-    background: #222;
-  }
-
-  /* Divider */
-  .divider.horizontal::after,
-  .divider.vertical::after {
-    background: #444;
-  }
-
-  .divider:hover::after {
-    background: #666;
-  }
-
-  /* Modal-Inhalte */
-  .modal-content {
-    background: #333;
-    color: #eee;
-  }
-
-  .modal-content h2 {
-    color: #eee;
-  }
-
-  #settingsShortcutName {
-    color: #333;
-  }
-
-  .modal-section {
-    background: #444;
-  }
-
-  /* Texteingabefelder, Labels und Select-Boxen */
-  input[type="text"],
-  select {
-    color: #eee;
-    background: #444;
-    border: 2px solid #555;
-  }
-
-  label {
-    color: #eee;
-  }
-
-  /* Search Box */
-  .search-box {
-    background: #333;
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  }
-
-  #searchInput {
-    background: transparent;
-  }
-
-  /* Buttons im Modal */
-  .modal-content button.save,
-  .modal-content button.delete,
-  .modal-content button.cancel {
-    color: #eee;
-    background: #555;
-    border: 2px solid #666;
-  }
-
-  .modal-content button.save:hover {
-    background: #666;
-    border-color: #777;
-  }
-
-  .modal-content button.delete:hover {
-    background: #a00;
-    border-color: #900;
-  }
-
-  .modal-content button.cancel:hover {
-    background: #777;
-    border-color: #888;
-  }
+#settingsShortcutName {
+  color: var(--modal-text);
 }
 
-/* ############################################# */
+/* ==========================================================================
+   Themes — jedes Theme setzt nur die Variablen von oben.
+   Neue Themes hinzufügen = neuer Block mit denselben Variablennamen.
+   ========================================================================== */
 
-/* Light-Mode*/
-/* Allgemeines */
+/* Light Mode */
 body[data-theme="light-mode"] {
-  background-color: #f0f4f9;
-  color: #3c4043;
+  --bg: #f0f4f9;
+  --text: #3c4043;
+  --accent: #007bff;
+  --scrollbar-track: #f0f4f9;
+  --scrollbar-thumb: #c1c1c1;
+  --scrollbar-thumb-hover: #a8a8a8;
+  --header-bg: #333;
+  --header-text: #fff;
+  --header-shadow: rgba(255, 255, 255, 0.15);
+  --tab-bg: rgba(255, 255, 255, 0.1);
+  --tab-hover-bg: rgba(255, 255, 255, 0.2);
+  --tab-active-bg: rgba(255, 255, 255, 0.3);
+  --shortcut-bg: #fff;
+  --shortcut-border: #ddd;
+  --shortcut-text: #000000;
+  --shortcut-link-color: rgb(71, 71, 71);
+  --shortcut-shadow: rgba(0, 0, 0, 0.3);
+  --shortcut-img-filter: none;
+  --shortcut-dragover-border: #666;
+  --shortcut-dragover-bg: #f8f8f8;
+  --divider-color: #e0e0e0;
+  --divider-hover-color: #999999;
+  --modal-bg: #fff;
+  --modal-text: rgb(71, 71, 71);
+  --modal-heading-color: rgb(56, 56, 56);
+  --modal-heading-border: #eee;
+  --modal-section-bg: #fff;
+  --modal-section-shadow: rgba(0, 0, 0, 0.3);
+  --input-bg: #ffffff;
+  --input-text: rgb(71, 71, 71);
+  --input-border: #555;
+  --label-color: rgb(71, 71, 71);
+  --search-bg: #ffffff;
+  --search-text: #202124;
+  --search-shadow: rgba(32, 33, 36, 0.28);
+  --search-radius: 28px;
+  --clear-btn-color: #70757a;
+  --btn-save-bg: #007bff;
+  --btn-save-border: #007bff;
+  --btn-save-hover-bg: #0069d9;
+  --btn-save-hover-border: #0062cc;
+  --btn-delete-bg: #dd0c0c;
+  --btn-delete-border: #dd0c0c;
+  --btn-delete-hover-bg: #c90b0b;
+  --btn-delete-hover-border: #c90b0b;
+  --btn-cancel-bg: #6c757d;
+  --btn-cancel-border: #6c757d;
+  --btn-cancel-hover-bg: #5a6268;
+  --btn-cancel-hover-border: #545b62;
+  --shortcut-preview-bg: #f8f8f8;
+  --shortcut-preview-link-color: #666;
+  --info-box-bg: rgba(0, 123, 255, 0.1);
+  --info-box-border: rgba(0, 123, 255, 0.3);
+  --info-box-text: #000000;
 }
 
-/* Light Mode Scrollbar */
-body[data-theme="light-mode"] ::-webkit-scrollbar-track {
-  background: #f0f4f9;
-}
-
-body[data-theme="light-mode"] ::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-}
-
-body[data-theme="light-mode"] ::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
-}
-
-/* Header */
-body[data-theme="light-mode"] header {
-  background: #333;
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
-}
-
-/* Shortcuts */
-body[data-theme="light-mode"] .shortcut {
-  background: #fff;
-  border: 1px solid #ddd;
-  color: #000000;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-}
-
-body[data-theme="light-mode"] .shortcut:hover {
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-}
-
-body[data-theme="light-mode"] .shortcut::after {
-  background: #f4f4f4;
-}
-
-body[data-theme="light-mode"] .shortcut a {
-  color: rgb(71, 71, 71);
-}
-
-body[data-theme="light-mode"] .shortcut.dragging {
-  color: #000000;
-}
-
-body[data-theme="light-mode"] .shortcut.drag-over {
-  border: 2px dashed #666;
-  background: #f8f8f8;
-}
-
-/* Divider */
-body[data-theme="light-mode"] .divider.horizontal::after,
-body[data-theme="light-mode"] .divider.vertical::after {
-  background: #e0e0e0;
-}
-
-body[data-theme="light-mode"] .divider:hover::after {
-  background: #999999;
-}
-
-/* Modal-Inhalte */
-body[data-theme="light-mode"] .modal-content {
-  background: #fff;
-  color: rgb(71, 71, 71);
-}
-
-body[data-theme="light-mode"] .modal-content h2 {
-  color: rgb(56, 56, 56);
-}
-
-body[data-theme="light-mode"] #settingsShortcutName {
-  color: rgb(56, 56, 56);
-}
-
-body[data-theme="light-mode"] .modal-section {
-  background: white;
-  box-shadow: 0px 0px 10px 2px rgba(0, 0, 0, 0.3);
-}
-
-/* Texteingabefelder, Labels und Select-Boxen */
-body[data-theme="light-mode"] input[type="text"],
-body[data-theme="light-mode"] select {
-  color: rgb(71, 71, 71);
-  background: #ffffff;
-  border: 2px solid #555;
-}
-
-body[data-theme="light-mode"] label {
-  color: rgb(71, 71, 71);
-}
-
-/* Search Box */
-body[data-theme="light-mode"] .search-box {
-  background-color: #ffffff;
-  border-radius: 28px;
-  box-shadow: 0 1px 6px rgba(32, 33, 36, 0.28);
-  transition: box-shadow 0.3s ease-in-out;
-}
-
-body[data-theme="light-mode"] .search-box:hover,
-body[data-theme="light-mode"] .search-box:focus-within {
-  box-shadow: 0 2px 8px rgba(32, 33, 36, 0.2);
-}
-
-body[data-theme="light-mode"] #searchInput {
-  color: #202124;
-}
-
-/* Buttons im Modal */
-body[data-theme="light-mode"] .clear-btn {
-  color: #70757a;
-}
-
-body[data-theme="light-mode"] .modal-content button.save {
-  background: #007bff;
-  color: white;
-  border: 2px solid #007bff;
-}
-
-body[data-theme="light-mode"] .modal-content button.save:hover {
-  background: #0069d9;
-  border-color: #0062cc;
-}
-
-body[data-theme="light-mode"] .modal-content button.delete {
-  background: #dd0c0c;
-  color: white;
-  border: 2px solid #dd0c0c;
-}
-
-body[data-theme="light-mode"] .modal-content button.delete:hover {
-  background: #c90b0b;
-  border-color: #c90b0b;
-}
-
-body[data-theme="light-mode"] .modal-content button.cancel {
-  background: #6c757d;
-  color: white;
-}
-
-body[data-theme="light-mode"] .modal-content button.cancel:hover {
-  background: #5a6268;
-  border-color: #545b62;
-}
-
-/* ############################################# */
-
-/* Dark-Mode */
-/* Allgemeines */
+/* Dark Mode */
 body[data-theme="dark-mode"] {
-  background-color: #202124;
-  color: #e8eaed;
+  --bg: #202124;
+  --text: #e8eaed;
+  --accent: #007bff;
+  --scrollbar-track: #2a2a2a;
+  --scrollbar-thumb: #555;
+  --scrollbar-thumb-hover: #777;
+  --header-bg: #111;
+  --header-text: #eee;
+  --header-shadow: rgba(255, 255, 255, 0.15);
+  --tab-bg: rgba(255, 255, 255, 0.1);
+  --tab-hover-bg: rgba(255, 255, 255, 0.2);
+  --tab-active-bg: rgba(255, 255, 255, 0.3);
+  --shortcut-bg: #111;
+  --shortcut-border: #444;
+  --shortcut-text: #eee;
+  --shortcut-link-color: #eee;
+  --shortcut-shadow: rgba(255, 255, 255, 0.3);
+  --shortcut-img-filter: none;
+  --shortcut-dragover-border: #666;
+  --shortcut-dragover-bg: #222;
+  --divider-color: #444;
+  --divider-hover-color: #666;
+  --modal-bg: #333;
+  --modal-text: #eee;
+  --modal-heading-color: #eee;
+  --modal-heading-border: #555;
+  --modal-section-bg: #444;
+  --modal-section-shadow: rgba(0, 0, 0, 0.4);
+  --input-bg: #444;
+  --input-text: #eee;
+  --input-border: #555;
+  --label-color: #eee;
+  --search-bg: #303134;
+  --search-text: #e8eaed;
+  --search-shadow: rgba(0, 0, 0, 0.4);
+  --search-radius: 28px;
+  --clear-btn-color: #9aa0a6;
+  --btn-save-bg: #555;
+  --btn-save-border: #666;
+  --btn-save-hover-bg: #666;
+  --btn-save-hover-border: #777;
+  --btn-delete-bg: #555;
+  --btn-delete-border: #666;
+  --btn-delete-hover-bg: #a00;
+  --btn-delete-hover-border: #900;
+  --btn-cancel-bg: #555;
+  --btn-cancel-border: #666;
+  --btn-cancel-hover-bg: #777;
+  --btn-cancel-hover-border: #888;
+  --shortcut-preview-bg: #292929;
+  --shortcut-preview-link-color: #aaa;
+  --info-box-bg: rgba(0, 123, 255, 0.2);
+  --info-box-border: rgba(0, 123, 255, 0.5);
+  --info-box-text: #66b3ff;
 }
 
-/* Header */
-body[data-theme="dark-mode"] header {
-  background: #111;
-  color: #eee;
-  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
+/* Minimal Mode */
+body[data-theme="minimal-mode"] {
+  --bg: #111;
+  --text: #eee;
+  --accent: #eee;
+  --scrollbar-track: #222;
+  --scrollbar-thumb: #444;
+  --scrollbar-thumb-hover: #555;
+  --header-bg: #111;
+  --header-text: #eee;
+  --header-shadow: rgba(255, 255, 255, 0.15);
+  --tab-bg: rgba(255, 255, 255, 0);
+  --tab-hover-bg: rgba(51, 51, 51, 0.5);
+  --tab-active-bg: rgb(51, 51, 51);
+  --shortcut-bg: #111;
+  --shortcut-border: transparent;
+  --shortcut-text: #eee;
+  --shortcut-link-color: #eee;
+  --shortcut-shadow: rgba(255, 255, 255, 0);
+  --shortcut-img-filter: grayscale(100%) brightness(100%);
+  --shortcut-dragover-border: #666;
+  --shortcut-dragover-bg: #222;
+  --divider-color: #333;
+  --divider-hover-color: #444;
+  --modal-bg: #333;
+  --modal-text: #eee;
+  --modal-heading-color: #eee;
+  --modal-heading-border: #444;
+  --modal-section-bg: #444;
+  --modal-section-shadow: rgba(0, 0, 0, 0.3);
+  --input-bg: #444;
+  --input-text: #eee;
+  --input-border: #666;
+  --label-color: #eee;
+  --search-bg: #333;
+  --search-text: #eee;
+  --search-shadow: rgba(0, 0, 0, 0.3);
+  --search-radius: 6px;
+  --clear-btn-color: #000000;
+  --btn-save-bg: #333;
+  --btn-save-border: #333;
+  --btn-save-hover-bg: #333;
+  --btn-save-hover-border: #666;
+  --btn-delete-bg: #333;
+  --btn-delete-border: #333;
+  --btn-delete-hover-bg: #a00;
+  --btn-delete-hover-border: #666;
+  --btn-cancel-bg: #444;
+  --btn-cancel-border: #444;
+  --btn-cancel-hover-bg: #444;
+  --btn-cancel-hover-border: #666;
+  --shortcut-preview-bg: #333;
+  --shortcut-preview-link-color: #888;
+  --info-box-bg: rgba(0, 123, 255, 0.15);
+  --info-box-border: rgba(0, 123, 255, 0.4);
+  --info-box-text: #eee;
 }
 
-/* Shortcuts */
-body[data-theme="dark-mode"] .shortcut {
-  background: #111;
-  border: 1px solid #444;
-  color: #eee;
-  box-shadow: 0 2px 10px rgba(255, 255, 255, 0.3);
+/* Catppuccin Mocha */
+body[data-theme="catppuccin-mocha"] {
+  --bg: #1e1e2e;
+  --text: #cdd6f4;
+  --accent: #89b4fa;
+  --scrollbar-track: #181825;
+  --scrollbar-thumb: #45475a;
+  --scrollbar-thumb-hover: #585b70;
+  --header-bg: #181825;
+  --header-text: #cdd6f4;
+  --header-shadow: rgba(0, 0, 0, 0.5);
+  --tab-bg: rgba(137, 180, 250, 0.1);
+  --tab-hover-bg: rgba(137, 180, 250, 0.2);
+  --tab-active-bg: #89b4fa;
+  --tab-text: #cdd6f4;
+  --shortcut-bg: #313244;
+  --shortcut-border: #45475a;
+  --shortcut-text: #cdd6f4;
+  --shortcut-link-color: #89b4fa;
+  --shortcut-shadow: rgba(0, 0, 0, 0.4);
+  --shortcut-img-filter: none;
+  --shortcut-dragover-border: #89b4fa;
+  --shortcut-dragover-bg: #313244;
+  --divider-color: #45475a;
+  --divider-hover-color: #585b70;
+  --modal-bg: #1e1e2e;
+  --modal-text: #cdd6f4;
+  --modal-heading-color: #cba6f7;
+  --modal-heading-border: #45475a;
+  --modal-section-bg: #313244;
+  --modal-section-shadow: rgba(0, 0, 0, 0.5);
+  --input-bg: #313244;
+  --input-text: #cdd6f4;
+  --input-border: #45475a;
+  --label-color: #fab387;
+  --search-bg: #313244;
+  --search-text: #cdd6f4;
+  --search-shadow: rgba(0, 0, 0, 0.4);
+  --search-radius: 24px;
+  --clear-btn-color: #cdd6f4;
+  --btn-save-bg: #a6e3a1;
+  --btn-save-border: #a6e3a1;
+  --btn-save-hover-bg: #94d991;
+  --btn-save-hover-border: #94d991;
+  --btn-delete-bg: #f38ba8;
+  --btn-delete-border: #f38ba8;
+  --btn-delete-hover-bg: #eb6f92;
+  --btn-delete-hover-border: #eb6f92;
+  --btn-cancel-bg: #585b70;
+  --btn-cancel-border: #585b70;
+  --btn-cancel-hover-bg: #6c6f85;
+  --btn-cancel-hover-border: #6c6f85;
+  --shortcut-preview-bg: #313244;
+  --shortcut-preview-link-color: #89b4fa;
+  --info-box-bg: rgba(137, 180, 250, 0.15);
+  --info-box-border: rgba(137, 180, 250, 0.4);
+  --info-box-text: #cdd6f4;
 }
 
-body[data-theme="dark-mode"] .shortcut:hover {
-  box-shadow: 0 5px 15px rgba(255, 255, 255, 0.3);
+body[data-theme="catppuccin-mocha"] .modal-content button.save,
+body[data-theme="catppuccin-mocha"] .modal-content button.delete {
+  color: #11111b;
 }
 
-body[data-theme="dark-mode"] .shortcut::after {
-  background: #444;
+body[data-theme="catppuccin-mocha"] .modal-content button.cancel {
+  color: #cdd6f4;
 }
 
-body[data-theme="dark-mode"] .shortcut a {
-  color: #eee;
-}
-
-body[data-theme="dark-mode"] .shortcut.dragging {
-  color: #eee;
-}
-
-body[data-theme="dark-mode"] .shortcut.drag-over {
-  border: 2px dashed #666;
-  background: #222;
-}
-
-/* Divider */
-body[data-theme="dark-mode"] .divider.horizontal::after,
-body[data-theme="dark-mode"] .divider.vertical::after {
-  background: #444;
-}
-
-body[data-theme="dark-mode"] .divider:hover::after {
-  background: #666;
-}
-
-/* Modal-Inhalte */
-body[data-theme="dark-mode"] .modal-content {
-  background: #333;
-  color: #eee;
-}
-
-body[data-theme="dark-mode"] .modal-content h2 {
-  color: #eee;
-}
-
-body[data-theme="dark-mode"] #settingsShortcutName {
-  color: #333;
-}
-
-body[data-theme="dark-mode"] .modal-section {
-  background: #444;
-}
-
-/* Texteingabefelder, Labels und Select-Boxen */
-body[data-theme="dark-mode"] input[type="text"],
-body[data-theme="dark-mode"] select {
-  color: #eee;
-  background: #444;
-  border: 2px solid #555;
-}
-
-body[data-theme="dark-mode"] label {
-  color: #eee;
-}
-
-/* Search Box */
-body[data-theme="dark-mode"] .search-box {
-  background-color: #303134;
-  border-radius: 28px;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
-  transition: box-shadow 0.3s ease-in-out;
-}
-
-body[data-theme="dark-mode"] .search-box:hover,
-body[data-theme="dark-mode"] .search-box:focus-within {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-}
-
-body[data-theme="dark-mode"] #searchInput {
-  color: #e8eaed;
-}
-
-/* Buttons im Modal */
-body[data-theme="dark-mode"] .clear-btn {
-  color: #9aa0a6;
-}
-
-body[data-theme="dark-mode"] .modal-content button.save,
-body[data-theme="dark-mode"] .modal-content button.delete,
-body[data-theme="dark-mode"] .modal-content button.cancel {
-  color: #eee;
-  background: #555;
-  border: 2px solid #666;
-}
-
-body[data-theme="dark-mode"] .modal-content button.save:hover {
-  background: #666;
-  border-color: #777;
-}
-
-body[data-theme="dark-mode"] .modal-content button.delete:hover {
-  background: #a00;
-  border-color: #900;
-}
-
-body[data-theme="dark-mode"] .modal-content button.cancel:hover {
-  background: #777;
-  border-color: #888;
-}
-
-/* ############################################# */
-
-/* 8bit-Mode */
+/* 8bit Mode — Variablen + eigene Effekte (CRT-Overlay, Cursor, Font) */
 body[data-theme="eightbit-mode"] {
-  background: #001100;
-  color: #00ff00;
+  --bg: #001100;
+  --text: #00ff00;
+  --accent: #00ff00;
+  --scrollbar-track: #001100;
+  --scrollbar-thumb: #00ff00;
+  --scrollbar-thumb-hover: #00cc00;
+  --header-bg: #002200;
+  --header-text: #00ff00;
+  --header-shadow: rgba(0, 255, 0, 0.5);
+  --tab-bg: #002200;
+  --tab-hover-bg: #003300;
+  --tab-active-bg: #004400;
+  --shortcut-bg: #001100;
+  --shortcut-border: #00ff00;
+  --shortcut-text: #00ff00;
+  --shortcut-link-color: #00ff00;
+  --shortcut-shadow: rgba(0, 255, 0, 0.5);
+  --shortcut-img-filter: grayscale(100%) brightness(200%);
+  --shortcut-dragover-border: #00ff00;
+  --shortcut-dragover-bg: #002200;
+  --divider-color: #00ff00;
+  --divider-hover-color: #00ff00;
+  --modal-bg: #001100;
+  --modal-text: #00ff00;
+  --modal-heading-color: #00ff00;
+  --modal-heading-border: #00ff00;
+  --modal-section-bg: #002200;
+  --modal-section-shadow: rgba(0, 255, 0, 0.4);
+  --input-bg: #001100;
+  --input-text: #00ff00;
+  --input-border: #00ff00;
+  --label-color: #00ff00;
+  --search-bg: #001100;
+  --search-text: #00ff00;
+  --search-shadow: rgba(0, 255, 0, 0.3);
+  --search-radius: 8px;
+  --clear-btn-color: #00ff00;
+  --btn-save-bg: #004400;
+  --btn-save-border: #00ff00;
+  --btn-save-hover-bg: #006600;
+  --btn-save-hover-border: #00ff00;
+  --btn-delete-bg: #440000;
+  --btn-delete-border: #ff0000;
+  --btn-delete-hover-bg: #660000;
+  --btn-delete-hover-border: #ff0000;
+  --btn-cancel-bg: #002200;
+  --btn-cancel-border: #00ff00;
+  --btn-cancel-hover-bg: #003300;
+  --btn-cancel-hover-border: #00ff00;
+  --shortcut-preview-bg: #001100;
+  --shortcut-preview-link-color: #00ff00;
+  --info-box-bg: rgba(0, 255, 0, 0.1);
+  --info-box-border: rgba(0, 255, 0, 0.4);
+  --info-box-text: #00ff00;
+
   font-family: "8Bit", monospace;
   position: relative;
   text-shadow: 0 0 5px #00ff0080;
-  /* image-rendering: pixelated; */
+}
+
+body[data-theme="eightbit-mode"] .shortcut,
+body[data-theme="eightbit-mode"] .tab,
+body[data-theme="eightbit-mode"] .modal-content,
+body[data-theme="eightbit-mode"] .modal-section,
+body[data-theme="eightbit-mode"] input[type="text"],
+body[data-theme="eightbit-mode"] select {
+  border-width: 2px;
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+}
+
+body[data-theme="eightbit-mode"] header {
+  border-bottom: 3px solid #00ff00;
+}
+
+body[data-theme="eightbit-mode"] .shortcut a {
+  font-family: "8Bit", monospace;
+  font-size: 1.2rem;
+}
+
+body[data-theme="eightbit-mode"] .tab.active {
+  box-shadow: inset 0 0 10px rgba(0, 255, 0, 0.5);
+}
+
+body[data-theme="eightbit-mode"] .modal-content {
+  border: 3px solid #00ff00;
+  box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+}
+
+body[data-theme="eightbit-mode"] .modal-section {
+  border: 2px dashed #00ff00;
+}
+
+body[data-theme="eightbit-mode"] input[type="text"],
+body[data-theme="eightbit-mode"] select {
+  font-family: "8Bit", monospace;
+}
+
+body[data-theme="eightbit-mode"] .modal-content button {
+  font-family: "8Bit", monospace;
+  text-transform: uppercase;
+  letter-spacing: 2px;
 }
 
 /* CRT Screen Effect */
@@ -1115,10 +1171,10 @@ body[data-theme="eightbit-mode"]::after {
   width: 100%;
   height: 100%;
   background: repeating-linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 0) 0,
-    rgba(0, 0, 0, 0.3) 50%,
-    rgba(0, 0, 0, 0) 100%
+          180deg,
+          rgba(0, 0, 0, 0) 0,
+          rgba(0, 0, 0, 0.3) 50%,
+          rgba(0, 0, 0, 0) 100%
   );
   pointer-events: none;
   z-index: 9999;
@@ -1132,98 +1188,6 @@ body[data-theme="eightbit-mode"]::after {
   to {
     transform: translateY(100%);
   }
-}
-
-/* Header */
-body[data-theme="eightbit-mode"] header {
-  background: #002200 !important;
-  border-bottom: 3px solid #00ff00;
-  box-shadow: 0 0 15px #00ff0080;
-}
-
-/* Shortcuts */
-body[data-theme="eightbit-mode"] .shortcut {
-  background: #001100 !important;
-  border: 2px solid #00ff00 !important;
-  box-shadow: 0 0 10px #00ff0080 !important;
-}
-
-body[data-theme="eightbit-mode"] .shortcut a {
-  color: #00ff00 !important;
-  font-family: "8Bit", monospace;
-  font-size: 1.2rem;
-}
-
-body[data-theme="eightbit-mode"] .shortcut img {
-  filter: grayscale(100%) brightness(200%);
-}
-
-/* Tabs */
-body[data-theme="eightbit-mode"] .tab {
-  background: #002200 !important;
-  border: 1px solid #00ff00 !important;
-  color: #00ff00 !important;
-}
-
-body[data-theme="eightbit-mode"] .tab.active {
-  background: #004400 !important;
-  box-shadow: inset 0 0 10px #00ff0080;
-}
-
-/* Modal */
-body[data-theme="eightbit-mode"] .modal-content {
-  background: #001100 !important;
-  border: 3px solid #00ff00;
-  box-shadow: 0 0 20px #00ff0080;
-}
-
-body[data-theme="eightbit-mode"] .modal-section {
-  background: #002200 !important;
-  border: 2px dashed #00ff00;
-}
-
-body[data-theme="eightbit-mode"] input[type="text"],
-body[data-theme="eightbit-mode"] select {
-  background: #001100 !important;
-  border: 2px solid #00ff00 !important;
-  color: #00ff00 !important;
-  font-family: "8Bit", monospace;
-}
-
-body[data-theme="eightbit-mode"] .modal-content button {
-  font-family: "8Bit", monospace;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-}
-
-body[data-theme="eightbit-mode"] .modal-content button.save {
-  background: #004400 !important;
-  border: 2px solid #00ff00 !important;
-}
-
-body[data-theme="eightbit-mode"] .modal-content button.delete {
-  background: #440000 !important;
-  border: 2px solid #ff0000 !important;
-}
-
-/* Search Box */
-body[data-theme="eightbit-mode"] .search-box {
-  background: #001100 !important;
-  border: 2px #00ff00 !important;
-}
-
-body[data-theme="eightbit-mode"] #searchInput {
-  color: #00ff00 !important;
-}
-
-body[data-theme="eightbit-mode"] .clear-btn {
-  color: #00ff00;
-}
-
-/* Divider */
-body[data-theme="eightbit-mode"] .divider::after {
-  background: #00ff00 !important;
-  opacity: 0.6;
 }
 
 @keyframes cursor-pulse {
@@ -1241,13 +1205,12 @@ body[data-theme="eightbit-mode"] .divider::after {
 /* 8bit-Mode Cursor Styles */
 body[data-theme="eightbit-mode"] {
   cursor:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect width='12' height='12' x='2' y='2' fill='%2300ff00'/%3E%3Crect x='10' y='10' width='6' height='6' fill='%2300ff00'/%3E%3C/svg%3E")
-      8 8,
-    pointer !important;
+          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect width='12' height='12' x='2' y='2' fill='%2300ff00'/%3E%3Crect x='10' y='10' width='6' height='6' fill='%2300ff00'/%3E%3C/svg%3E")
+          8 8,
+          pointer;
   animation: cursor-pulse 5s infinite;
 }
 
-/* Hover-Zustand für Zeigefinger */
 body[data-theme="eightbit-mode"] a:hover,
 body[data-theme="eightbit-mode"] button:hover,
 body[data-theme="eightbit-mode"] .shortcut:hover,
@@ -1255,331 +1218,54 @@ body[data-theme="eightbit-mode"] [onclick]:hover,
 body[data-theme="eightbit-mode"] .tab:hover,
 body[data-theme="eightbit-mode"] .divider:hover {
   cursor:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect width='12' height='12' x='2' y='2' fill='%23ff0000'/%3E%3Crect x='10' y='10' width='6' height='6' fill='%23ff0000'/%3E%3C/svg%3E")
-      8 8,
-    pointer !important;
+          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect width='12' height='12' x='2' y='2' fill='%23ff0000'/%3E%3Crect x='10' y='10' width='6' height='6' fill='%23ff0000'/%3E%3C/svg%3E")
+          8 8,
+          pointer;
 }
 
-/* Zeigefinger-Ersatz für klickbare Elemente */
 body[data-theme="eightbit-mode"] a,
 body[data-theme="eightbit-mode"] button,
 body[data-theme="eightbit-mode"] .shortcut,
 body[data-theme="eightbit-mode"] [onclick] {
   cursor:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect width='12' height='12' x='2' y='2' fill='%2300ff00'/%3E%3Crect x='10' y='10' width='6' height='6' fill='%2300ff00'/%3E%3C/svg%3E")
-      8 8,
-    pointer !important;
+          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect width='12' height='12' x='2' y='2' fill='%2300ff00'/%3E%3Crect x='10' y='10' width='6' height='6' fill='%2300ff00'/%3E%3C/svg%3E")
+          8 8,
+          pointer;
 }
 
-/* Active/Clicked State */
 body[data-theme="eightbit-mode"] a:active,
 body[data-theme="eightbit-mode"] button:active {
   cursor:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect width='12' height='12' x='2' y='2' fill='%2300ff00'/%3E%3Crect x='10' y='10' width='6' height='6' fill='%2300ff00'/%3E%3C/svg%3E")
-      8 8,
-    pointer !important;
+          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect width='12' height='12' x='2' y='2' fill='%2300ff00'/%3E%3Crect x='10' y='10' width='6' height='6' fill='%2300ff00'/%3E%3C/svg%3E")
+          8 8,
+          pointer;
 }
 
-/* Input Fields */
 body[data-theme="eightbit-mode"] input,
 body[data-theme="eightbit-mode"] textarea {
   cursor:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect width='8' height='14' x='4' y='1' fill='%2300ff00' stroke='%2300ff00' stroke-width='2'/%3E%3C/svg%3E")
-      8 8,
-    text !important;
+          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect width='8' height='14' x='4' y='1' fill='%2300ff00' stroke='%2300ff00' stroke-width='2'/%3E%3C/svg%3E")
+          8 8,
+          text;
 }
 
-/* Drag & Drop */
 body[data-theme="eightbit-mode"] .draggable {
   cursor:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect width='14' height='14' x='1' y='1' fill='%23ffff00' stroke='%23fff' stroke-width='2'/%3E%3C/svg%3E")
-      8 8,
-    grab !important;
+          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect width='14' height='14' x='1' y='1' fill='%23ffff00' stroke='%23fff' stroke-width='2'/%3E%3C/svg%3E")
+          8 8,
+          grab;
 }
 
-/* Loading State */
 body[data-theme="eightbit-mode"] .loading {
   cursor:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect width='14' height='14' x='1' y='1' fill='%23ff00ff' stroke='%23fff' stroke-width='2'/%3E%3C/svg%3E")
-      8 8,
-    progress !important;
+          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect width='14' height='14' x='1' y='1' fill='%23ff00ff' stroke='%23fff' stroke-width='2'/%3E%3C/svg%3E")
+          8 8,
+          progress;
 }
 
-/* Disabled State */
 body[data-theme="eightbit-mode"] :disabled {
   cursor:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect width='14' height='14' x='1' y='1' fill='%23666' stroke='%23fff' stroke-width='2'/%3E%3C/svg%3E")
-      8 8,
-    not-allowed !important;
-}
-
-/* ############################################# */
-
-/* Minimal-Mode */
-/* Allgemeines */
-body[data-theme="minimal-mode"] {
-  background: #111;
-  color: #eee;
-}
-
-/* Header */
-body[data-theme="minimal-mode"] header {
-  background: #111;
-  color: #eee;
-  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
-}
-
-/* Shortcuts */
-body[data-theme="minimal-mode"] .shortcut {
-  background: #111;
-  border: 0;
-  color: #eee;
-  box-shadow: 0 0 0 rgba(255, 255, 255, 0);
-}
-
-body[data-theme="minimal-mode"] .shortcut:hover {
-  box-shadow: 0 0 15px rgba(255, 255, 255, 0);
-}
-
-body[data-theme="minimal-mode"] .shortcut::after {
-  background: #444;
-}
-
-body[data-theme="minimal-mode"] .shortcut img {
-  filter: grayscale(100%) brightness(100%);
-}
-
-body[data-theme="minimal-mode"] .shortcut a {
-  color: #eee;
-}
-
-body[data-theme="minimal-mode"] .shortcut.dragging {
-  color: #eee;
-}
-
-body[data-theme="minimal-mode"] .shortcut.drag-over {
-  border: 2px dashed #666;
-  background: #222;
-}
-
-body[data-theme="minimal-mode"] .edit-btn {
-  background-color: #111;
-  color: #eee;
-}
-
-/* Divider */
-body[data-theme="minimal-mode"] .divider:hover {
-  transform: scale(1);
-}
-
-body[data-theme="minimal-mode"] .divider.horizontal::after,
-body[data-theme="minimal-mode"] .divider.vertical::after {
-  background: #333;
-}
-
-body[data-theme="minimal-mode"] .divider:hover::after {
-  background: #444;
-}
-
-/* Modal-Inhalte */
-body[data-theme="minimal-mode"] .modal-content {
-  background: #333;
-  color: #eee;
-}
-
-body[data-theme="minimal-mode"] .modal-content h2 {
-  color: #eee;
-}
-
-body[data-theme="minimal-mode"] #settingsShortcutName {
-  color: #333;
-}
-
-body[data-theme="minimal-mode"] .modal-section {
-  background: #444;
-}
-
-/* Texteingabefelder, Labels und Select-Boxen */
-body[data-theme="minimal-mode"] input[type="text"],
-body[data-theme="minimal-mode"] select {
-  color: #eee;
-  background: #444;
-  border: 2px solid #555;
-}
-
-body[data-theme="minimal-mode"] label {
-  color: #eee;
-}
-
-/* Search Box */
-body[data-theme="minimal-mode"] .search-box {
-  background-color: #333;
-  border: 2px solid #333;
-  border-radius: 6px;
-  box-shadow: none;
-}
-
-body[data-theme="minimal-mode"] #searchInput {
-  background: transparent;
-}
-
-/* Felder im Modal */
-body[data-theme="minimal-mode"] .modal-section input[type="text"] {
-  border-color: #666;
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(102, 102, 102, 0.1);
-}
-
-body[data-theme="minimal-mode"] .modal-section input[type="text"]:focus {
-  border-color: #eee;
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(102, 102, 102, 0.1);
-}
-
-body[data-theme="minimal-mode"] .modal-section select {
-  width: 100%;
-  margin-top: 5px;
-  padding: 10px 15px;
-  border: 2px solid #666;
-  border-radius: 6px;
-  font-size: 14px;
-  transition: border-color 0.3s ease;
-}
-
-body[data-theme="minimal-mode"] .modal-section select:focus {
-  border-color: #ddd;
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(102, 102, 102, 0.1);
-}
-
-body[data-theme="minimal-mode"] .shortcut-preview {
-  background-color: #333;
-}
-
-body[data-theme="minimal-mode"] #settingsShortcutName {
-  color: #eee;
-}
-
-body[data-theme="minimal-mode"] .shortcut-preview a {
-  color: #888;
-}
-
-/* Buttons im Modal */
-body[data-theme="minimal-mode"] .clear-btn {
-  color: #000000;
-}
-
-body[data-theme="minimal-mode"] .modal-content button.save,
-body[data-theme="minimal-mode"] .modal-content button.delete {
-  color: #eee;
-  background: #333;
-  border: 2px solid #333;
-}
-
-body[data-theme="minimal-mode"] .modal-content button.cancel {
-  color: #eee;
-  background: #444;
-  border: 2px solid #444;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-body[data-theme="minimal-mode"] .modal-content button.save:hover {
-  background: #333;
-  border-color: #666;
-}
-
-body[data-theme="minimal-mode"] .modal-content button.delete:hover {
-  background: #a00;
-  border-color: #666;
-}
-
-body[data-theme="minimal-mode"] .modal-content button.cancel:hover {
-  background: #444;
-  border-color: #666;
-}
-
-/* Tabs */
-body[data-theme="minimal-mode"] .tab {
-  background: rgba(255, 255, 255, 0);
-}
-
-body[data-theme="minimal-mode"] .tab:hover {
-  background: rgb(51, 51, 51, 0.5);
-}
-
-body[data-theme="minimal-mode"] .tab.active {
-  background: rgb(51, 51, 51);
-  font-weight: 500;
-}
-
-/* Catppuccin Mocha Theme */
-body[data-theme="catppuccin-mocha"] {
-  background-color: #1e1e2e; /* Base */
-  color: #cdd6f4; /* Text */
-}
-
-body[data-theme="catppuccin-mocha"] header {
-  background: #181825; /* Mantle */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-}
-
-body[data-theme="catppuccin-mocha"] .tab {
-  background: rgba(137, 180, 250, 0.1); /* Blue opacity */
-  color: #cdd6f4;
-}
-
-body[data-theme="catppuccin-mocha"] .tab.active {
-  background: #89b4fa; /* Blue */
-  color: #11111b; /* Crust */
-}
-
-body[data-theme="catppuccin-mocha"] .shortcut {
-  background: #313244; /* Surface0 */
-  border: 1px solid #45475a; /* Surface1 */
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
-}
-
-body[data-theme="catppuccin-mocha"] .shortcut a {
-  color: #89b4fa; /* Blue */
-}
-
-body[data-theme="catppuccin-mocha"] .search-box {
-  background: #313244;
-  color: #cdd6f4;
-}
-
-body[data-theme="catppuccin-mocha"] #searchInput {
-  color: #cdd6f4;
-}
-
-body[data-theme="catppuccin-mocha"] .modal-content {
-  background: #1e1e2e;
-  color: #cdd6f4;
-}
-
-body[data-theme="catppuccin-mocha"] .modal-section {
-  background: #313244;
-  box-shadow: 0px 0px 10px 2px rgba(0, 0, 0, 0.5);
-}
-
-body[data-theme="catppuccin-mocha"] label,
-body[data-theme="catppuccin-mocha"] .modalTitle {
-  color: #fab387; /* Peach */
-}
-
-body[data-theme="catppuccin-mocha"] .modal-content h2 {
-  color: #cba6f7; /* Mauve */
-  border-bottom-color: #45475a;
-}
-
-body[data-theme="catppuccin-mocha"] button.save {
-  background: #a6e3a1; /* Green */
-  color: #11111b;
-  border: none;
-}
-
-body[data-theme="catppuccin-mocha"] button.cancel {
-  background: #585b70; /* Surface2 */
-  color: #cdd6f4;
-  border: none;
+          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect width='14' height='14' x='1' y='1' fill='%23666' stroke='%23fff' stroke-width='2'/%3E%3C/svg%3E")
+          8 8,
+          not-allowed;
 }

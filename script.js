@@ -1,27 +1,43 @@
+// #### Globaler In-Memory-State
+// state wird einmal beim Start aus chrome.storage geladen (siehe storage.js)
+// und bei jeder Änderung per saveState() persistiert. `data` ist ein Alias
+// auf state.data, damit der Rest des Codes wie gewohnt "data.sets" etc.
+// verwenden kann.
+let state = null;
+let data = null;
+
 let currentEditShortcutIndex = null;
 let currentMoveShortcutIndex = null;
 let isAddMode = false;
-const shortcutsStorageKey = "shortcuts";
-const dataStorageKey = "dashboardData";
-const useBookmarksKey = "useBookmarks"; // New configuration for Bookmarks Mode
-const onOpenKey = "onOpenSetting";
-const lastActiveTabKey = "lastActiveTab";
+let isDragging = false;
+let draggedTabIndex = null;
 
-let data = {
-  sets: {
-    Default: [
-      {
-        name: "Brave",
-        url: "https://search.brave.com/",
-        type: "link",
-      },
-    ],
-  },
-  currentSet: "Default",
-  setOrder: ["Default", "Work"],
-};
+// #### Init
+async function init() {
+  state = await loadState();
+  data = state.data;
 
-// Neue Funktionen für Bookmarks-Integration
+  applyTheme(state.settings.theme, { skipSave: true });
+
+  await loadData();
+  renderSetTabs();
+  renderShortcuts();
+  renderQuickAccessBar();
+
+  wireStaticEventListeners();
+  initOnOpenSettings();
+  initQuickAccessSettings();
+  updateBookmarksModeDisplay();
+}
+
+document.addEventListener("DOMContentLoaded", init);
+
+// #### Persistenz
+async function saveData() {
+  await saveState(state);
+}
+
+// #### Bookmarks-Integration
 function loadBookmarksData() {
   return new Promise((resolve, reject) => {
     chrome.bookmarks.getTree((bookmarkTreeNodes) => {
@@ -40,7 +56,6 @@ function loadBookmarksData() {
 }
 
 function parseBookmarksTree(bookmarkTreeNodes) {
-  // Suche nach dem Dashboard-Ordner
   const dashboardFolder = findDashboardFolder(bookmarkTreeNodes);
   if (!dashboardFolder) {
     return null;
@@ -49,18 +64,18 @@ function parseBookmarksTree(bookmarkTreeNodes) {
   const sets = {};
   const setOrder = [];
 
-  // Verarbeite alle Unterordner des Dashboard-Ordners
   if (dashboardFolder.children) {
     dashboardFolder.children.forEach((child) => {
       if (child.children && child.children.length > 0) {
-        // Nur Ordner mit Bookmarks verwenden
         const shortcuts = child.children
-          .filter((bookmark) => bookmark.url) // Nur echte Bookmarks, keine Ordner
-          .map((bookmark) => ({
-            name: bookmark.title || "Untitled",
-            url: bookmark.url,
-            type: "link",
-          }));
+            .filter((bookmark) => bookmark.url)
+            .map((bookmark) => ({
+              name: bookmark.title || "Untitled",
+              url: bookmark.url,
+              type: "link",
+              useCount: 0,
+              lastUsedAt: null,
+            }));
 
         if (shortcuts.length > 0) {
           sets[child.title] = shortcuts;
@@ -78,10 +93,8 @@ function parseBookmarksTree(bookmarkTreeNodes) {
 }
 
 function getInitialSet(setOrder) {
-  const onOpenSetting = JSON.parse(localStorage.getItem(onOpenKey)) || {
-    mode: "last",
-  };
-  const lastActiveTab = localStorage.getItem(lastActiveTabKey);
+  const onOpenSetting = state.settings.onOpen || { mode: "last" };
+  const lastActiveTab = state.settings.lastActiveTab;
 
   if (onOpenSetting.mode === "specific" && onOpenSetting.tab) {
     if (setOrder.includes(onOpenSetting.tab)) {
@@ -103,7 +116,6 @@ function findDashboardFolder(bookmarkTreeNodes) {
         if (child.title === "Dashboard" && child.children) {
           return child;
         }
-        // Rekursiv in Unterordnern suchen
         const found = findDashboardFolder([child]);
         if (found) return found;
       }
@@ -112,194 +124,118 @@ function findDashboardFolder(bookmarkTreeNodes) {
   return null;
 }
 
-// Modifizierte loadData-Funktion
-function loadData() {
-  const useBookmarks = localStorage.getItem(useBookmarksKey) === "true";
-
-  if (useBookmarks) {
-    // Versuche Bookmarks zu laden
-    loadBookmarksData()
-      .then((bookmarksData) => {
-        data = bookmarksData;
-        renderSetTabs();
-        renderShortcuts();
-        console.log("Bookmarks successfully loaded:", data);
-      })
-      .catch((error) => {
-        console.warn("Error loading bookmarks:", error);
-        // Fallback zu localStorage
-        loadLocalData();
-      });
-  } else {
-    // Verwende localStorage wie bisher
-    loadLocalData();
-  }
-}
-
-function loadLocalData() {
-  const stored = localStorage.getItem(dataStorageKey);
-  if (stored) {
+async function loadData() {
+  if (state.settings.useBookmarks) {
     try {
-      const parsed = JSON.parse(stored);
-
-      // Migration für ältere Daten ohne setOrder
-      if (!parsed.setOrder) {
-        parsed.setOrder = Object.keys(parsed.sets);
-      }
-
-      if (parsed.sets && parsed.currentSet) {
-        data = parsed;
-        // Apply "On Open" setting
-        data.currentSet = getInitialSet(data.setOrder);
-      } else {
-        initializeData();
-      }
-    } catch (e) {
-      initializeData();
+      const bookmarksData = await loadBookmarksData();
+      data.sets = bookmarksData.sets;
+      data.currentSet = bookmarksData.currentSet;
+      data.setOrder = bookmarksData.setOrder;
+      console.log("Bookmarks successfully loaded:", data);
+    } catch (error) {
+      console.warn("Error loading bookmarks:", error);
+      // Bookmarks-Ordner fehlt (noch) — im Bookmarks-Modus bleiben, aber
+      // mit den zuletzt gespeicherten Daten weiterarbeiten, statt zu crashen
     }
   } else {
-    initializeData();
+    data.currentSet = getInitialSet(data.setOrder);
   }
 }
 
-// Modifizierte saveData-Funktion
-function saveData() {
-  const useBookmarks = localStorage.getItem(useBookmarksKey) === "true";
-
-  if (!useBookmarks) {
-    // Nur speichern wenn nicht im Bookmarks-Modus
-    localStorage.setItem(dataStorageKey, JSON.stringify(data));
-  }
-}
-
-// Funktion zum Umschalten zwischen Bookmarks und localStorage
 function toggleBookmarksMode() {
-  const currentMode = localStorage.getItem(useBookmarksKey) === "true";
-  const newMode = !currentMode;
+  state.settings.useBookmarks = !state.settings.useBookmarks;
 
-  localStorage.setItem(useBookmarksKey, newMode.toString());
-
-  if (newMode) {
-    // Wechsle zu Bookmarks-Modus
-    loadBookmarksData()
-      .then((bookmarksData) => {
-        data = bookmarksData;
-        renderSetTabs();
-        renderShortcuts();
-        updateBookmarksModeDisplay();
-        console.log("Switched to Bookmarks Mode");
-      })
-      .catch((error) => {
-        console.error("Fehler beim Laden der Bookmarks:", error);
-        alert(
-          "Dashboard folder not found! Please create a 'Dashboard' folder in your bookmarks with subfolders for tabs.",
-        );
-        // Zurück zu localStorage
-        localStorage.setItem(useBookmarksKey, "false");
-        loadLocalData();
-        renderSetTabs();
-        renderShortcuts();
-        updateBookmarksModeDisplay();
-      });
-  } else {
-    // Wechsle zu localStorage-Modus
-    loadLocalData();
+  const applyAndRender = async () => {
+    await loadData();
     renderSetTabs();
     renderShortcuts();
+    renderQuickAccessBar();
     updateBookmarksModeDisplay();
-    console.log("Switched to localStorage Mode");
+    await saveData();
+  };
+
+  if (state.settings.useBookmarks) {
+    loadBookmarksData()
+        .then((bookmarksData) => {
+          data.sets = bookmarksData.sets;
+          data.currentSet = bookmarksData.currentSet;
+          data.setOrder = bookmarksData.setOrder;
+          renderSetTabs();
+          renderShortcuts();
+          renderQuickAccessBar();
+          updateBookmarksModeDisplay();
+          saveData();
+          console.log("Switched to Bookmarks Mode");
+        })
+        .catch((error) => {
+          console.error("Fehler beim Laden der Bookmarks:", error);
+          alert(
+              "Dashboard folder not found! Please create a 'Dashboard' folder in your bookmarks with subfolders for tabs.",
+          );
+          state.settings.useBookmarks = false;
+          applyAndRender();
+        });
+  } else {
+    applyAndRender();
   }
 }
 
-// Funktion zum Aktualisieren der Bookmarks (für manuelle Synchronisation)
 function refreshBookmarks() {
-  const useBookmarks = localStorage.getItem(useBookmarksKey) === "true";
+  if (!state.settings.useBookmarks) return;
 
-  if (useBookmarks) {
-    loadBookmarksData()
+  loadBookmarksData()
       .then((bookmarksData) => {
-        data = bookmarksData;
+        data.sets = bookmarksData.sets;
+        data.currentSet = bookmarksData.currentSet;
+        data.setOrder = bookmarksData.setOrder;
         renderSetTabs();
         renderShortcuts();
+        renderQuickAccessBar();
         console.log("Bookmarks updated");
       })
       .catch((error) => {
         console.error("Fehler beim Aktualisieren der Bookmarks:", error);
         alert("Error updating bookmarks: " + error.message);
       });
-  }
-}
-
-// Standarddaten
-function initializeData() {
-  data = {
-    sets: {
-      Default: [
-        { name: "Google", url: "https://www.google.de" },
-        { name: "Wikipedia", url: "https://www.wikipedia.org" },
-      ],
-    },
-    currentSet: "Default",
-    setOrder: ["Default"],
-  };
-
-  // Check if we should override the current set based on settings
-  data.currentSet = getInitialSet(data.setOrder);
-
-  saveData();
 }
 
 // #### Settings Modal
 function openSettingsModal() {
   document.getElementById("settingsModal").style.display = "flex";
   updateBookmarksModeDisplay();
-}
-
-function updateBookmarksModeDisplay() {
-  const useBookmarks = localStorage.getItem(useBookmarksKey) === "true";
-  const toggleBtn = document.getElementById("toggleBookmarksMode");
-
-  if (useBookmarks) {
-    toggleBtn.innerHTML =
-      '<span><i class="fa-solid fa-bookmark"></i> Bookmarks Mode (Active)</span>';
-    toggleBtn.style.background = "#28a745";
-  } else {
-    toggleBtn.innerHTML =
-      '<span><i class="fa-solid fa-bookmark"></i> Bookmarks Mode</span>';
-    toggleBtn.style.background = "";
-  }
+  initOnOpenSettings();
+  initQuickAccessSettings();
 }
 
 function closeSettingsModal() {
   document.getElementById("settingsModal").style.display = "none";
 }
 
+function updateBookmarksModeDisplay() {
+  const toggleBtn = document.getElementById("toggleBookmarksMode");
+  if (!toggleBtn) return;
+
+  if (state.settings.useBookmarks) {
+    toggleBtn.innerHTML =
+        '<span><i class="fa-solid fa-bookmark"></i> Bookmarks Mode (Active)</span>';
+    toggleBtn.style.background = "#28a745";
+  } else {
+    toggleBtn.innerHTML =
+        '<span><i class="fa-solid fa-bookmark"></i> Bookmarks Mode</span>';
+    toggleBtn.style.background = "";
+  }
+}
+
 // #### Design Mode
-function setDesignMode(theme) {
+function applyTheme(theme, { skipSave = false } = {}) {
   document.body.setAttribute("data-theme", theme);
-  localStorage.setItem("designMode", theme);
+  state.settings.theme = theme;
+  if (!skipSave) saveData();
+}
+
+function setDesignMode(theme) {
+  applyTheme(theme);
   closeSettingsModal();
-
-  const isDark =
-    theme === "dark-mode" ||
-    theme === "minimal-mode" ||
-    theme === "catppuccin-mocha";
-
-  // Update Gemini Icon based on theme
-  const geminiIcon = document.getElementById("geminiIcon");
-  if (geminiIcon) {
-    geminiIcon.src = isDark
-      ? "icons/gemini-icon-white.png"
-      : "icons/gemini-icon-color.png";
-  }
-
-  // Update Claude Icon based on theme
-  const claudeIcon = document.getElementById("claudeIcon");
-  if (claudeIcon) {
-    claudeIcon.src = isDark
-      ? "icons/claude-icon-white.png"
-      : "icons/claude-icon-color.png";
-  }
 }
 
 // #### Shortcuts
@@ -323,29 +259,43 @@ function renderShortcuts() {
     const tile = document.createElement("div");
     tile.className = "shortcut";
     tile.setAttribute("data-index", index);
-    tile.innerHTML = `
-      <button class="edit-btn" title="Edit Shortcut">✎</button>
-      <img src="https://www.google.com/s2/favicons?domain=${sc.url}&sz=64" alt="${sc.name} Icon">
-      <a href="${sc.url}" target="_blank">${sc.name}</a>
-    `;
 
-    bindTileEvents(tile);
+    const editBtn = document.createElement("button");
+    editBtn.className = "edit-btn";
+    editBtn.title = "Edit Shortcut";
+    editBtn.textContent = "✎";
+
+    const img = document.createElement("img");
+    img.src = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(sc.url)}&sz=64`;
+    img.alt = `${sc.name} Icon`;
+
+    const link = document.createElement("a");
+    link.href = sc.url;
+    link.target = "_blank";
+    link.textContent = sc.name;
+
+    tile.append(editBtn, img, link);
+
+    bindTileEvents(tile, index);
     container.appendChild(tile);
 
-    tile.querySelector(".edit-btn").addEventListener("click", (e) => {
+    editBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       openShortcutSettings(index);
     });
   });
 
-  // Add-Tile
+  container.appendChild(buildAddTile());
+}
+
+function buildAddTile() {
   const addTile = document.createElement("div");
   addTile.className = "shortcut add-tile add-menu-btn";
   addTile.innerHTML = `
     +
     <div class="add-menu">
       <div class="add-menu-content">
-        <div class="add-option" id="openAddModal">
+        <div class="add-option" id="openAddModalOption">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
             <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
@@ -362,15 +312,27 @@ function renderShortcuts() {
     </div>
   `;
   addTile.addEventListener("click", openAddModal);
-  container.appendChild(addTile);
+  addTile
+      .querySelector("#addDividerOption")
+      .addEventListener("click", (e) => {
+        e.stopPropagation();
+      });
+  return addTile;
+}
+
+// Nutzung eines Shortcuts tracken (für die Quick-Access-Leiste)
+function trackShortcutUse(sc) {
+  sc.useCount = (sc.useCount || 0) + 1;
+  sc.lastUsedAt = Date.now();
+  saveData();
+  renderQuickAccessBar();
 }
 
 function handleDragStart(e) {
-  // Verhindere Drag bei allen interaktiven Elementen
   if (
-    e.target.closest(
-      ".shortcutSettings-btn, .editShortcutBtn, .deleteShortcutBtn",
-    )
+      e.target.closest(
+          ".shortcutSettings-btn, .editShortcutBtn, .deleteShortcutBtn",
+      )
   ) {
     e.preventDefault();
     return;
@@ -391,12 +353,12 @@ function handleDragLeave(e) {
 
 function handleDrop(e) {
   e.preventDefault();
+  this.classList.remove("drag-over");
   const fromIndex = parseInt(e.dataTransfer.getData("text/plain"));
   const toIndex = parseInt(this.dataset.index);
 
-  if (fromIndex === toIndex) return;
+  if (fromIndex === toIndex || isNaN(fromIndex) || isNaN(toIndex)) return;
 
-  // Elemente im Array verschieben
   const currentSet = data.sets[data.currentSet];
   const [movedItem] = currentSet.splice(fromIndex, 1);
   currentSet.splice(toIndex, 0, movedItem);
@@ -405,42 +367,39 @@ function handleDrop(e) {
   renderShortcuts();
 }
 
-// Aktualisiere die bindTileEvents-Funktion
-function bindTileEvents(tile) {
+function bindTileEvents(tile, index) {
   tile.addEventListener("click", function (e) {
     if (
-      !e.target.closest(".shortcutSettings-btn") &&
-      !tile.classList.contains("add-tile")
+        !e.target.closest(".shortcutSettings-btn, .edit-btn") &&
+        !tile.classList.contains("add-tile")
     ) {
-      // Weiterleiten zur URL
       const link = tile.querySelector("a");
       if (link) {
+        const sc = data.sets[data.currentSet][index];
+        if (sc) trackShortcutUse(sc);
         window.location.href = link.href;
       }
     }
   });
 
-  // NEU: Verhindert den Autoscroll-Modus des Browsers beim Mousedown der mittleren Maustaste
   tile.addEventListener("mousedown", function (e) {
     if (e.button === 1) {
-      // Mittlere Maustaste
       e.preventDefault();
     }
   });
 
-  // Mittelklick-Handler
   tile.addEventListener("auxclick", function (e) {
     if (e.button === 1) {
-      // Mittlere Maustaste
       e.preventDefault();
       const link = tile.querySelector("a");
       if (link) {
+        const sc = data.sets[data.currentSet][index];
+        if (sc) trackShortcutUse(sc);
         window.open(link.href, "_blank");
       }
     }
   });
 
-  // Drag-and-Drop-Events
   tile.draggable = true;
   tile.addEventListener("dragstart", handleDragStart);
   tile.addEventListener("dragover", handleDragOver);
@@ -449,11 +408,156 @@ function bindTileEvents(tile) {
   tile.addEventListener("dragend", () => {
     tile.classList.remove("dragging");
   });
+}
 
-  // Deaktiviere Drag für bestimmte Elemente
-  //tile.querySelectorAll('').forEach(element => {
-  //  element.draggable = false;
-  //});
+// #### Quick-Access-Leiste (Meistgenutzt / Zuletzt genutzt / Kombiniert)
+function computeQuickAccessScore(sc, mode) {
+  const now = Date.now();
+  const ageHours = sc.lastUsedAt ? (now - sc.lastUsedAt) / 3_600_000 : Infinity;
+
+  if (mode === "useCount") return sc.useCount || 0;
+  if (mode === "lastUsedAt") return sc.lastUsedAt || 0;
+
+  // balanced: Häufigkeit gewichtet mit Zeitverfall (klingt über ~24h ab)
+  const recencyWeight = 1 / (1 + ageHours / 24);
+  return (sc.useCount || 0) * recencyWeight;
+}
+
+function getQuickAccessItems() {
+  const settings = state.settings.quickAccessBar;
+  if (!settings.enabled) return [];
+
+  // Set-übergreifend: alle Shortcuts aus allen Tabs, nicht nur dem aktiven.
+  const allShortcuts = Object.values(data.sets)
+      .flat()
+      .filter((sc) => sc.type !== "divider" && (sc.useCount || 0) > 0);
+
+  return allShortcuts
+      .map((sc) => ({ sc, score: computeQuickAccessScore(sc, settings.mode) }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, settings.count)
+      .map((x) => x.sc);
+}
+
+let quickAccessResizeObserver = null;
+
+function renderQuickAccessBar() {
+  const bar = document.getElementById("quickAccessBar");
+  if (!bar) return;
+
+  bar.innerHTML = "";
+  const items = getQuickAccessItems();
+
+  items.forEach((sc) => {
+    const item = document.createElement("div");
+    item.className = "quick-access-item";
+
+    const img = document.createElement("img");
+    img.src = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(sc.url)}&sz=32`;
+    img.alt = "";
+
+    const label = document.createElement("span");
+    label.textContent = sc.name;
+
+    item.append(img, label);
+    item.addEventListener("click", () => {
+      trackShortcutUse(sc);
+      window.location.href = sc.url;
+    });
+
+    bar.appendChild(item);
+  });
+
+  fitQuickAccessItems();
+
+  // Bei Größenänderung der Leiste (Fenster resize, Sidebar, Zoom) neu
+  // berechnen, welche Items noch reinpassen. Einmalig einrichten.
+  if (!quickAccessResizeObserver && "ResizeObserver" in window) {
+    quickAccessResizeObserver = new ResizeObserver(() => fitQuickAccessItems());
+    quickAccessResizeObserver.observe(bar);
+  }
+}
+
+// Blendet von hinten (= niedrigster Score, da bereits sortiert) so viele
+// Items aus, bis der Rest wieder in die Breite der Leiste passt. Dadurch
+// bleiben immer die relevantesten Einträge sichtbar, zentriert, ohne
+// Scrollbalken und ohne abgeschnittene Icons/Labels.
+function fitQuickAccessItems() {
+  const bar = document.getElementById("quickAccessBar");
+  if (!bar) return;
+
+  const itemEls = Array.from(bar.querySelectorAll(".quick-access-item"));
+  if (itemEls.length === 0) return;
+
+  itemEls.forEach((el) => {
+    el.style.display = "";
+  });
+
+  const containerWidth = bar.clientWidth;
+  const gap = parseFloat(getComputedStyle(bar).gap) || 0;
+
+  let total = 0;
+  let overflowFrom = -1;
+
+  for (let i = 0; i < itemEls.length; i++) {
+    total += itemEls[i].offsetWidth + (i > 0 ? gap : 0);
+    if (total > containerWidth) {
+      overflowFrom = i;
+      break;
+    }
+  }
+
+  if (overflowFrom !== -1) {
+    for (let i = overflowFrom; i < itemEls.length; i++) {
+      itemEls[i].style.display = "none";
+    }
+  }
+}
+
+function initQuickAccessSettings() {
+  const toggleBtn = document.getElementById("toggleQuickAccessBar");
+  const modeSelect = document.getElementById("quickAccessModeSelect");
+  const countInput = document.getElementById("quickAccessCountInput");
+  if (!toggleBtn || !modeSelect || !countInput) return;
+
+  const settings = state.settings.quickAccessBar;
+  modeSelect.value = settings.mode;
+  countInput.value = settings.count;
+  updateQuickAccessToggleDisplay();
+
+  toggleBtn.onclick = () => {
+    settings.enabled = !settings.enabled;
+    updateQuickAccessToggleDisplay();
+    renderQuickAccessBar();
+    saveData();
+  };
+
+  modeSelect.onchange = () => {
+    settings.mode = modeSelect.value;
+    renderQuickAccessBar();
+    saveData();
+  };
+
+  countInput.onchange = () => {
+    let count = parseInt(countInput.value, 10);
+    if (isNaN(count)) count = 7;
+    count = Math.min(12, Math.max(3, count));
+    countInput.value = count;
+    settings.count = count;
+    renderQuickAccessBar();
+    saveData();
+  };
+}
+
+function updateQuickAccessToggleDisplay() {
+  const toggleBtn = document.getElementById("toggleQuickAccessBar");
+  if (!toggleBtn) return;
+  const enabled = state.settings.quickAccessBar.enabled;
+
+  toggleBtn.innerHTML = enabled
+      ? '<span><i class="fa-solid fa-bolt"></i> Quick Access Bar (Active)</span>'
+      : '<span><i class="fa-solid fa-bolt"></i> Quick Access Bar</span>';
+  toggleBtn.style.background = enabled ? "#28a745" : "";
 }
 
 // #### Tabs
@@ -470,17 +574,17 @@ function renderSetTabs() {
     tab.draggable = true;
     tab.dataset.setName = setName;
 
-    tab.addEventListener("click", function (e) {
+    tab.addEventListener("click", function () {
       if (!isDragging) {
         data.currentSet = setName;
-        localStorage.setItem(lastActiveTabKey, setName);
+        state.settings.lastActiveTab = setName;
         saveData();
         renderSetTabs();
         renderShortcuts();
+        renderQuickAccessBar();
       }
     });
 
-    // Drag & Drop Events
     tab.addEventListener("dragstart", handleTabDragStart);
     tab.addEventListener("dragover", handleTabDragOver);
     tab.addEventListener("dragleave", handleTabDragLeave);
@@ -490,9 +594,6 @@ function renderSetTabs() {
     setHeader.appendChild(tab);
   });
 }
-
-let isDragging = false;
-let draggedTabIndex = null;
 
 function handleTabDragStart(e) {
   isDragging = true;
@@ -572,7 +673,6 @@ function addDivider(orientation) {
   closeAddModal();
 }
 
-// Bind Events für Divider
 function bindDividerEvents(divider) {
   divider.addEventListener("click", function (e) {
     if (confirm("Delete divider?")) {
@@ -583,7 +683,6 @@ function bindDividerEvents(divider) {
     }
   });
 
-  // Drag & Drop
   divider.draggable = true;
   divider.addEventListener("dragstart", handleDragStart);
   divider.addEventListener("dragover", handleDragOver);
@@ -594,82 +693,14 @@ function bindDividerEvents(divider) {
   });
 }
 
-// #### Suchleiste
-function searchbar() {
-  const searchInput = document.getElementById("searchInput");
-  const clearBtn = document.querySelector(".clear-btn");
-
-  // Zeigt den "Löschen"-Button nur an, wenn Text im Eingabefeld ist
-  searchInput.addEventListener("input", function () {
-    if (this.value) {
-      clearBtn.style.display = "block";
-    } else {
-      clearBtn.style.display = "none";
-    }
-  });
-
-  // Leert das Eingabefeld, wenn der "Löschen"-Button geklickt wird
-  clearBtn.addEventListener("click", function () {
-    searchInput.value = "";
-    this.style.display = "none";
-    searchInput.focus(); // Setzt den Fokus zurück ins Eingabefeld
-  });
-
-  // Verarbeitet die Suche, wenn die Eingabetaste gedrückt wird
-  searchInput.addEventListener("keypress", function (e) {
-    if (e.key === "Enter") {
-      const query = this.value.trim();
-      if (query) {
-        // Sendet die Nachricht und fängt Fehler ab
-        chrome.runtime.sendMessage(
-          { action: "sendToGemini", text: query },
-          function (response) {
-            if (chrome.runtime.lastError) {
-              console.error(chrome.runtime.lastError.message);
-              // Hier könnte eine Fallback-Logik stehen, falls nötig
-            }
-          },
-        );
-      }
-    }
-  });
-
-  // Initial state: hide "Clear" button
-  clearBtn.style.display = "none";
-
-  // Gemini Button
-  const geminiBtn = document.getElementById("geminiBtn");
-  if (geminiBtn) {
-    geminiBtn.addEventListener("click", function () {
-      window.location.href = "https://gemini.google.com";
-    });
-  }
-
-  // Claude Button
-  const claudeBtn = document.getElementById("claudeBtn");
-  if (claudeBtn) {
-    claudeBtn.addEventListener("click", function () {
-      window.location.href = "https://claude.ai/new";
-    });
-  }
-}
-
-// #### Settings Modal
-function openSetSettingsModal() {
-  document.getElementById("setSettingsModal").style.display = "flex";
-  renderSetSettingsOptions();
-}
-
 // #### Settings Modal Logic for "On Open"
 function initOnOpenSettings() {
   const onOpenLast = document.getElementById("onOpenLast");
   const onOpenSpecific = document.getElementById("onOpenSpecific");
   const onOpenTabList = document.getElementById("onOpenTabList");
+  if (!onOpenLast || !onOpenSpecific || !onOpenTabList) return;
 
-  // Load saved settings
-  const savedSetting = JSON.parse(localStorage.getItem(onOpenKey)) || {
-    mode: "last",
-  };
+  const savedSetting = state.settings.onOpen || { mode: "last" };
 
   if (savedSetting.mode === "specific") {
     onOpenSpecific.checked = true;
@@ -679,7 +710,6 @@ function initOnOpenSettings() {
     onOpenTabList.disabled = true;
   }
 
-  // Populate dropdown
   onOpenTabList.innerHTML = "";
   data.setOrder.forEach((setName) => {
     const option = document.createElement("option");
@@ -691,36 +721,34 @@ function initOnOpenSettings() {
     onOpenTabList.appendChild(option);
   });
 
-  // Event Listeners
-  onOpenLast.addEventListener("change", () => {
+  onOpenLast.onchange = () => {
     onOpenTabList.disabled = true;
     saveOnOpenSettings();
-  });
+  };
 
-  onOpenSpecific.addEventListener("change", () => {
+  onOpenSpecific.onchange = () => {
     onOpenTabList.disabled = false;
     saveOnOpenSettings();
-  });
+  };
 
-  onOpenTabList.addEventListener("change", () => {
+  onOpenTabList.onchange = () => {
     saveOnOpenSettings();
-  });
+  };
 }
 
 function saveOnOpenSettings() {
   const mode = document.querySelector('input[name="onOpenMode"]:checked').value;
   const tab = document.getElementById("onOpenTabList").value;
 
-  const setting = { mode, tab };
-  localStorage.setItem(onOpenKey, JSON.stringify(setting));
+  state.settings.onOpen = { mode, tab };
+  saveData();
 }
 
-// Hook into openSettingsModal
-const originalOpenSettingsModal = openSettingsModal;
-openSettingsModal = function () {
-  originalOpenSettingsModal();
-  initOnOpenSettings();
-};
+// #### Set-Settings Modal
+function openSetSettingsModal() {
+  document.getElementById("setSettingsModal").style.display = "flex";
+  renderSetSettingsOptions();
+}
 
 function closeSetSettingsModal() {
   document.getElementById("setSettingsModal").style.display = "none";
@@ -756,18 +784,15 @@ function renameSet() {
   const newName = document.getElementById("renameSetName").value.trim();
 
   if (newName.length > 0 && !data.sets[newName]) {
-    // Update set order
     const orderIndex = data.setOrder.indexOf(oldName);
     if (orderIndex > -1) {
       data.setOrder[orderIndex] = newName;
     }
 
-    // Update current set if needed
     if (data.currentSet === oldName) {
       data.currentSet = newName;
     }
 
-    // Rename the set
     data.sets[newName] = data.sets[oldName];
     delete data.sets[oldName];
 
@@ -791,21 +816,24 @@ function deleteSet() {
     }
     saveData();
     renderSetTabs();
+    renderShortcuts();
+    renderQuickAccessBar();
     closeSetSettingsModal();
   }
 }
 
 // #### Add Modal
 function openAddModal(e) {
-  e.stopPropagation();
+  if (e) e.stopPropagation();
   isAddMode = true;
   currentEditShortcutIndex = null;
   document.getElementById("addModalTitle").innerHTML =
-    `<i class="fa-solid fa-plus"></i> Add Shortcut`;
+      `<i class="fa-solid fa-plus"></i> Add Shortcut`;
   document.getElementById("editName").value = "";
   document.getElementById("editUrl").value = "";
   document.getElementById("addModal").style.display = "flex";
-  document.querySelector(".add-menu-content").classList.remove("show");
+  const menu = document.querySelector(".add-menu-content");
+  if (menu) menu.classList.remove("show");
 }
 
 function openAddModalByIndex(index) {
@@ -816,7 +844,7 @@ function openAddModalByIndex(index) {
   currentEditShortcutIndex = index;
 
   document.getElementById("addModalTitle").innerHTML =
-    `<i class="fa-solid fa-pen"></i> Edit Shortcut`;
+      `<i class="fa-solid fa-pen"></i> Edit Shortcut`;
   document.getElementById("editName").value = shortcut.name;
   document.getElementById("editUrl").value = shortcut.url;
 
@@ -830,7 +858,7 @@ function closeAddModal() {
 }
 
 function saveEdit(event) {
-  event.stopPropagation();
+  if (event) event.stopPropagation();
   const newName = document.getElementById("editName").value.trim();
   const newUrl = document.getElementById("editUrl").value.trim();
   const currentSet = data.sets[data.currentSet];
@@ -841,26 +869,29 @@ function saveEdit(event) {
   }
 
   if (isAddMode) {
-    // Neuer Shortcut im aktuellen Set hinzufügen
-    currentSet.push({ name: newName, url: newUrl });
+    currentSet.push({ name: newName, url: newUrl, type: "link", useCount: 0, lastUsedAt: null });
   } else if (currentEditShortcutIndex !== null) {
-    // Bestehenden Shortcut im aktuellen Set bearbeiten
-    currentSet[currentEditShortcutIndex] = { name: newName, url: newUrl };
+    const existing = currentSet[currentEditShortcutIndex];
+    currentSet[currentEditShortcutIndex] = {
+      ...existing,
+      name: newName,
+      url: newUrl,
+    };
   }
 
   saveData();
   renderShortcuts();
+  renderQuickAccessBar();
   closeAddModal();
 }
 
 // #### Shortcut Settings Modal
-
 function openShortcutSettings(index) {
   const currentSet = data.sets[data.currentSet];
   const sc = currentSet[index];
 
   document.getElementById("settingsShortcutIcon").src =
-    `https://www.google.com/s2/favicons?domain=${sc.url}&sz=64`;
+      `https://www.google.com/s2/favicons?domain=${encodeURIComponent(sc.url)}&sz=64`;
   document.getElementById("settingsShortcutName").textContent = sc.name;
   document.getElementById("settingsShortcutUrl").href = sc.url;
   document.getElementById("settingsShortcutUrl").textContent = sc.url;
@@ -880,12 +911,13 @@ function openShortcutSettings(index) {
       currentSet.splice(index, 1);
       saveData();
       renderShortcuts();
+      renderQuickAccessBar();
       document.getElementById("shortcutSettingsModal").style.display = "none";
     }
   };
 
   document.getElementById("closeShortcutSettingsModal").onclick = () =>
-    closeShortcutSettingsModal();
+      closeShortcutSettingsModal();
 
   document.getElementById("shortcutSettingsModal").style.display = "flex";
 }
@@ -936,27 +968,24 @@ function closeMoveModal() {
   currentMoveShortcutIndex = null;
 }
 
-// #### Daten export
+// #### Daten Export / Import
 function exportData() {
-  const dataToExport = localStorage.getItem(dataStorageKey);
-  if (dataToExport) {
-    const blob = new Blob([dataToExport], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "dashboard_backup.json";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    console.log("Data exported.");
-    alert("Data successfully exported as dashboard_backup.json.");
-  } else {
-    alert("No data found to export!");
-  }
+  const payload = extractExportPayload(state);
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {
+    type: "application/json",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "dashboard_backup.json";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  console.log("Data exported.");
+  alert("Data successfully exported as dashboard_backup.json.");
 }
 
-// #### Daten import
 function importData(event) {
   const file = event.target.files[0];
   if (!file) {
@@ -964,15 +993,17 @@ function importData(event) {
   }
 
   const reader = new FileReader();
-  reader.onload = (e) => {
+  reader.onload = async (e) => {
     try {
       const importedData = JSON.parse(e.target.result);
-      // Optional: Validierung der Datenstruktur
       if (importedData.sets && importedData.currentSet) {
-        localStorage.setItem(dataStorageKey, JSON.stringify(importedData));
-        loadData(); // Daten neu laden und UI aktualisieren
+        data.sets = importedData.sets;
+        data.currentSet = importedData.currentSet;
+        data.setOrder = importedData.setOrder || Object.keys(importedData.sets);
+        await saveData();
         renderSetTabs();
         renderShortcuts();
+        renderQuickAccessBar();
         alert("Data successfully imported.");
         console.log("Data successfully imported and loaded.");
       } else {
@@ -987,159 +1018,85 @@ function importData(event) {
   reader.readAsText(file);
 }
 
-// Event-Listener für Export und Import hinzufügen
-document.addEventListener("DOMContentLoaded", () => {
-  const exportBtn = document.getElementById("exportDataBtn");
-  const importBtn = document.getElementById("importDataBtn");
-  const importInput = document.getElementById("importFileInput");
-
-  if (exportBtn) {
-    exportBtn.addEventListener("click", exportData);
-  }
-
-  if (importBtn) {
-    importBtn.addEventListener("click", () => {
-      importInput.click();
-    });
-  }
-
-  if (importInput) {
-    importInput.addEventListener("change", importData);
-  }
-});
-
-// #### Initial laden und rendern
-renderSetTabs();
-renderShortcuts();
-
-// #### Event-Listener DOMContentLoaded
-document.addEventListener("DOMContentLoaded", function () {
-  // Eventlistener für Design Mode
-  const savedDesignMode = localStorage.getItem("designMode") || "light-mode";
-  document.body.setAttribute("data-theme", savedDesignMode);
-
-  // Set initial Gemini Icon
-  const geminiIcon = document.getElementById("geminiIcon");
-  if (geminiIcon) {
-    if (savedDesignMode === "dark-mode" || savedDesignMode === "minimal-mode") {
-      geminiIcon.src = "icons/gemini-icon-white.png";
-    } else {
-      geminiIcon.src = "icons/gemini-icon-color.png";
-    }
-  }
-
-  // Set initial Claude Icon
-  const claudeIcon = document.getElementById("claudeIcon");
-  if (claudeIcon) {
-    if (savedDesignMode === "dark-mode" || savedDesignMode === "minimal-mode") {
-      claudeIcon.src = "icons/claude-icon-white.png";
-    } else {
-      claudeIcon.src = "icons/claude-icon-color.png";
-    }
-  }
+// #### Event-Listener (einmalig beim Start gebunden)
+function wireStaticEventListeners() {
+  document
+      .getElementById("darkModeBtn")
+      .addEventListener("click", () => setDesignMode("dark-mode"));
+  document
+      .getElementById("lightModeBtn")
+      .addEventListener("click", () => setDesignMode("light-mode"));
+  document
+      .getElementById("eightbitModeBtn")
+      .addEventListener("click", () => setDesignMode("eightbit-mode"));
+  document
+      .getElementById("minmalModeBtn")
+      .addEventListener("click", () => setDesignMode("minimal-mode"));
+  document
+      .getElementById("mochaModeBtn")
+      .addEventListener("click", () => setDesignMode("catppuccin-mocha"));
 
   document
-    .getElementById("darkModeBtn")
-    .addEventListener("click", () => setDesignMode("dark-mode"));
+      .getElementById("openSetSettingsModal")
+      .addEventListener("click", openSetSettingsModal);
   document
-    .getElementById("lightModeBtn")
-    .addEventListener("click", () => setDesignMode("light-mode"));
-  document
-    .getElementById("eightbitModeBtn")
-    .addEventListener("click", () => setDesignMode("eightbit-mode"));
-  document
-    .getElementById("minmalModeBtn")
-    .addEventListener("click", () => setDesignMode("minimal-mode"));
-  document
-    .getElementById("mochaModeBtn")
-    .addEventListener("click", () => setDesignMode("catppuccin-mocha"));
-
-  // Event-Listener für Modals
-  document
-    .getElementById("openSetSettingsModal")
-    .addEventListener("click", openSetSettingsModal);
-  document
-    .getElementById("closeSetSettingsModal")
-    .addEventListener("click", closeSetSettingsModal);
+      .getElementById("closeSetSettingsModal")
+      .addEventListener("click", closeSetSettingsModal);
   document.getElementById("addSet").addEventListener("click", addSet);
   document.getElementById("renameSet").addEventListener("click", renameSet);
   document.getElementById("deleteSet").addEventListener("click", deleteSet);
 
   document
-    .getElementById("openAddModal")
-    .addEventListener("click", openAddModal);
-  document
-    .getElementById("closeAddModal")
-    .addEventListener("click", closeAddModal);
+      .getElementById("closeAddModal")
+      .addEventListener("click", closeAddModal);
   document.getElementById("saveEdit").addEventListener("click", saveEdit);
 
   document
-    .getElementById("addHorizontalDivider")
-    .addEventListener("click", () => addDivider("horizontal"));
+      .getElementById("addHorizontalDivider")
+      .addEventListener("click", () => addDivider("horizontal"));
   document
-    .getElementById("addVerticalDivider")
-    .addEventListener("click", () => addDivider("vertical"));
+      .getElementById("addVerticalDivider")
+      .addEventListener("click", () => addDivider("vertical"));
 
   document.getElementById("confirmMove").addEventListener("click", confirmMove);
   document
-    .getElementById("cancelMove")
-    .addEventListener("click", closeMoveModal);
+      .getElementById("cancelMove")
+      .addEventListener("click", closeMoveModal);
 
   document
-    .getElementById("openSettingsModal")
-    .addEventListener("click", openSettingsModal);
+      .getElementById("openSettingsModal")
+      .addEventListener("click", openSettingsModal);
   document
-    .getElementById("closeSettingsModal")
-    .addEventListener("click", closeSettingsModal);
+      .getElementById("closeSettingsModal")
+      .addEventListener("click", closeSettingsModal);
 
-  // Bookmarks-Modus Event-Listener
   document
-    .getElementById("toggleBookmarksMode")
-    .addEventListener("click", toggleBookmarksMode);
+      .getElementById("toggleBookmarksMode")
+      .addEventListener("click", toggleBookmarksMode);
   document
-    .getElementById("refreshBookmarksBtn")
-    .addEventListener("click", refreshBookmarks);
+      .getElementById("refreshBookmarksBtn")
+      .addEventListener("click", refreshBookmarks);
 
-  // Restliche Initialisierungen
-  loadData();
-  renderSetTabs();
-  renderShortcuts();
-  searchbar();
-
-  // Klick-Handler
-  document.getElementById("addModal").addEventListener("click", function (e) {
-    if (e.target === this) {
-      closeAddModal();
-    }
+  document.getElementById("exportDataBtn").addEventListener("click", exportData);
+  document.getElementById("importDataBtn").addEventListener("click", () => {
+    document.getElementById("importFileInput").click();
   });
-
   document
-    .getElementById("setSettingsModal")
-    .addEventListener("click", function (e) {
-      if (e.target === this) {
-        closeSetSettingsModal();
-      }
-    });
+      .getElementById("importFileInput")
+      .addEventListener("change", importData);
 
-  document
-    .getElementById("shortcutSettingsModal")
-    .addEventListener("click", function (e) {
-      if (e.target === this) {
-        closeShortcutSettingsModal();
-      }
-    });
+  // Klick auf Overlay schließt das jeweilige Modal
+  const overlayCloseMap = {
+    addModal: closeAddModal,
+    setSettingsModal: closeSetSettingsModal,
+    shortcutSettingsModal: closeShortcutSettingsModal,
+    moveModal: closeMoveModal,
+    settingsModal: closeSettingsModal,
+  };
 
-  document.getElementById("moveModal").addEventListener("click", function (e) {
-    if (e.target === this) {
-      closeMoveModal();
-    }
+  Object.entries(overlayCloseMap).forEach(([id, closeFn]) => {
+    document.getElementById(id).addEventListener("click", function (e) {
+      if (e.target === this) closeFn();
+    });
   });
-
-  document
-    .getElementById("settingsModal")
-    .addEventListener("click", function (e) {
-      if (e.target === this) {
-        closeSettingsModal();
-      }
-    });
-});
+}

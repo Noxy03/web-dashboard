@@ -2,7 +2,7 @@
   "name": "My Dashboard New Tab",
   "short_name": "Dashboard",
   "description": "Set a personalized Dashboard as the new Tab-Page with Bookmark-Integration.",
-  "version": "1.0",
+  "version": "1.1.0",
   "manifest_version": 3,
   "icons": {
     "32": "icons/icon32.png",
@@ -14,9 +14,5 @@
   "chrome_url_overrides": {
     "newtab": "index.html"
   },
-  "background": {
-    "service_worker": "background.js"
-  },
-  "permissions": ["tabs", "scripting", "bookmarks"],
-  "host_permissions": ["https://gemini.google.com/*"]
+  "permissions": ["bookmarks", "storage"]
 }
