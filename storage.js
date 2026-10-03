@@ -31,7 +31,7 @@ function defaultState() {
         data: {
             sets: {
                 Default: [
-                    { name: "Google", url: "https://www.google.de", type: "link" },
+                    { name: "Startpage", url: "https://www.startpage.com/", type: "link" },
                     { name: "Wikipedia", url: "https://www.wikipedia.org", type: "link" },
                 ],
             },
@@ -93,7 +93,7 @@ function migrateFromLocalStorage() {
             foundLegacyData = true;
         }
     } catch (e) {
-        console.warn("Migration von localStorage fehlgeschlagen:", e);
+        console.warn("Migration from localStorage failed:", e);
     }
 
     return foundLegacyData ? state : null;
@@ -123,7 +123,7 @@ async function loadState() {
     // Nichts in chrome.storage — prüfen, ob alte localStorage-Daten existieren
     const migrated = migrateFromLocalStorage();
     if (migrated) {
-        console.log("Alte localStorage-Daten gefunden und migriert.");
+        console.log("Old localStorage data found and migrated.");
         await saveState(migrated);
         return migrated;
     }

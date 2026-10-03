@@ -1,65 +1,17 @@
-# Web Dashboard v3 - Chrome Extension
+# My Dashboard New Tab – Chrome Extension
 
-Ein personalisierbares Dashboard als neue Tab-Seite für Chrome mit Bookmarks-Integration.
+Ein personalisierbares Dashboard als neue Tab-Seite für Chrome, optional mit Bookmarks-Integration.
 
 ## Features
 
-- **Bookmarks-Integration**: Verwendet Chrome-Bookmarks als Datenquelle
-- **Drag & Drop**: Shortcuts und Tabs können per Drag & Drop neu angeordnet werden
-- **Mehrere Themes**: Light Mode, Dark Mode, 8bit Mode, Minimal Mode
-- **Responsive Design**: Funktioniert auf verschiedenen Bildschirmgrößen
-- **Suchfunktion**: Integrierte Suche mit Gemini AI
-
-## Bookmarks-Modus Setup
-
-### 1. Dashboard-Ordner erstellen
-
-1. Öffne Chrome und gehe zu `chrome://bookmarks/`
-2. Erstelle einen neuen Ordner namens **"Dashboard"**
-3. Erstelle Unterordner für deine Tabs (z.B. "Arbeit", "Privat", "Social Media")
-
-### 2. Bookmarks hinzufügen
-
-1. Füge Bookmarks in die Unterordner ein
-2. Jeder Unterordner wird zu einem Tab
-3. Jedes Bookmark wird zu einem Shortcut
-
-### 3. Dashboard aktivieren
-
-1. Öffne das Dashboard (neuer Tab)
-2. Klicke auf das Einstellungsrad (⚙️)
-3. Klicke auf "Bookmarks-Modus" um ihn zu aktivieren
-4. Das Dashboard lädt automatisch deine Bookmarks
-
-## Ordnerstruktur Beispiel
-
-```
-Bookmarks
-└── Dashboard
-    ├── Arbeit
-    │   ├── Gmail
-    │   ├── Google Drive
-    │   └── Slack
-    ├── Privat
-    │   ├── YouTube
-    │   ├── Netflix
-    │   └── Wikipedia
-    └── Social Media
-        ├── Facebook
-        ├── Twitter
-        └── Instagram
-```
-
-## Funktionen
-
-### Bookmarks-Modus
-- **Automatische Synchronisation**: Änderungen in Bookmarks werden beim nächsten Laden übernommen
-- **Manuelle Aktualisierung**: "Bookmarks aktualisieren" Button für sofortige Synchronisation
-- **Fallback**: Falls kein Dashboard-Ordner gefunden wird, wird automatisch auf localStorage zurückgegriffen
-
-### localStorage-Modus (Standard)
-- **Manuelle Verwaltung**: Tabs und Shortcuts können direkt im Dashboard bearbeitet werden
-- **Persistente Daten**: Alle Änderungen werden lokal gespeichert
+- **Zwei Datenquellen**: Chrome-Bookmarks (Ordner "Dashboard") oder manuell verwaltete Shortcuts
+- **Tabs (Sets)**: Shortcuts sind in Sets gruppiert, die als Tabs angezeigt werden
+- **Drag & Drop**: Shortcuts, Trennlinien und Tabs lassen sich per Drag & Drop neu anordnen
+- **Trennlinien**: Horizontale und vertikale Linien zur Strukturierung
+- **Quick-Access-Leiste**: Zeigt die meistgenutzten, zuletzt genutzten oder (kombiniert) beste Shortcuts, Anzahl einstellbar (3–12)
+- **Themes**: Light, Dark, Minimal, Catppuccin Mocha und 8bit
+- **Startverhalten**: Zuletzt geöffneten Tab merken oder immer einen bestimmten Tab öffnen
+- **Export / Import**: Sets und Shortcuts als JSON sichern und wiederherstellen
 
 ## Installation
 
@@ -71,43 +23,96 @@ Bookmarks
 
 ## Verwendung
 
-### Shortcuts hinzufügen/bearbeiten
-- Klicke auf das "+" Symbol
-- Wähle "Verknüpfung" aus
-- Gib Name und URL ein
+### Shortcuts hinzufügen und bearbeiten
+- Über das "+" Symbol Name und URL eingeben (oder eine Trennlinie hinzufügen)
+- Über die Shortcut-Einstellungen können Shortcuts bearbeitet, in ein anderes Set verschoben oder gelöscht werden
 
 ### Tabs verwalten
 - Klicke auf das Menü-Symbol (☰) neben den Tabs
-- Erstelle, benenne oder lösche Tabs
+- Sets erstellen, umbenennen oder löschen
+- Reihenfolge der Tabs per Drag & Drop ändern
 
-### Design ändern
-- Klicke auf das Einstellungsrad (⚙️)
-- Wähle zwischen verschiedenen Themes
+### Einstellungen (⚙️)
+- Theme wählen
+- Startverhalten festlegen
+- Bookmarks-Modus ein-/ausschalten und Bookmarks aktualisieren
+- Quick-Access-Leiste konfigurieren
+- Daten exportieren / importieren
+
+## Bookmarks-Modus
+
+### 1. Dashboard-Ordner erstellen
+
+1. Öffne `chrome://bookmarks/`
+2. Erstelle einen Ordner namens **"Dashboard"**
+3. Erstelle darin Unterordner für deine Tabs (z.B. "Arbeit", "Privat")
+
+### 2. Bookmarks hinzufügen
+
+Jeder Unterordner wird zu einem Tab, jedes Bookmark darin zu einem Shortcut.
+
+```
+Bookmarks
+└── Dashboard
+    ├── Arbeit
+    │   ├── Gmail
+    │   ├── Google Drive
+    │   └── Slack
+    └── Privat
+        ├── YouTube
+        └── Wikipedia
+```
+
+### 3. Aktivieren
+
+1. Öffne die Einstellungen (⚙️)
+2. Klicke auf "Bookmarks Mode"
+3. Mit "Refresh Bookmarks" werden Änderungen sofort übernommen
+
+Wird kein "Dashboard"-Ordner gefunden, erscheint eine Meldung und das Dashboard wechselt zurück in den manuellen Modus.
+
+## Manueller Modus (Standard)
+
+Sets und Shortcuts werden direkt im Dashboard verwaltet und lokal in `chrome.storage.local` gespeichert. Daten aus älteren Versionen (`localStorage`) werden beim ersten Start automatisch übernommen.
 
 ## Technische Details
 
 - **Manifest Version**: 3
-- **Berechtigungen**: bookmarks, tabs, scripting
-- **Datenquelle**: Chrome Bookmarks API oder localStorage
-- **Themes**: CSS-basierte Theme-Systeme
+- **Berechtigungen**: `bookmarks`, `storage`, Host-Zugriff auf `raw.githubusercontent.com` (nur für den Update-Check)
+- **Datenspeicher**: `chrome.storage.local` (Schema-Version 2, siehe `storage.js`)
+- **Shortcut-Icons**: Favicons über den Google-Favicon-Dienst
+- **UI-Icons**: Font Awesome 6 (per CDN)
+- **Themes**: CSS über `data-theme`-Attribut am `body`
+
+## Updates auf mehreren Geräten
+
+Die Extension aktualisiert sich nicht selbst (entpackte Extensions können ihre Dateien nicht überschreiben, MV3 verbietet nachgeladenen Code). Stattdessen:
+
+1. Repo auf jedem Gerät klonen und den Klon in `chrome://extensions/` als entpackte Extension laden
+2. Beim Start prüft `update-check.js` (höchstens alle 6 Stunden), ob die `manifest.json` auf GitHub eine neuere `version` hat, und zeigt dann einen Hinweis
+3. Auf dem Gerät `git pull` ausführen. Änderungen an HTML/JS/CSS greifen meist beim nächsten neuen Tab, bei Änderungen am Manifest die Extension neu laden
+
+Einrichtung: `<USER>` und `<REPO>` in `update-check.js` (`UPDATE_MANIFEST_URL`) und in `host_permissions` der `manifest.json` ersetzen. Das Repo muss öffentlich sein. Beim Veröffentlichen einer Änderung die `version` in `manifest.json` erhöhen. Export-Dateien mit persönlichen Daten gehören nicht ins Repo.
+
+Die Daten (Sets, Shortcuts, Einstellungen) liegen pro Gerät in `chrome.storage.local` und werden nicht über GitHub synchronisiert.
 
 ## Troubleshooting
 
 ### Bookmarks werden nicht geladen
-1. Überprüfe, ob ein "Dashboard"-Ordner in deinen Bookmarks existiert
-2. Stelle sicher, dass der Ordner Unterordner mit Bookmarks enthält
-3. Klicke auf "Bookmarks aktualisieren" in den Einstellungen
+1. Prüfe, ob ein Ordner "Dashboard" mit Unterordnern existiert
+2. Klicke in den Einstellungen auf "Refresh Bookmarks"
 
 ### Extension funktioniert nicht
-1. Überprüfe die Chrome-Konsole auf Fehlermeldungen
-2. Stelle sicher, dass alle Berechtigungen erteilt wurden
-3. Versuche die Extension neu zu laden
+1. Prüfe die Chrome-Konsole auf Fehlermeldungen
+2. Lade die Extension in `chrome://extensions/` neu
 
-## Entwicklung
+## Projektstruktur
 
-Die Extension besteht aus:
 - `manifest.json`: Extension-Konfiguration
 - `index.html`: Haupt-Interface
 - `script.js`: Funktionalität und Logik
+- `storage.js`: Storage-Layer (`chrome.storage.local`, Migration, Schema)
+- `update-check.js`: Update-Hinweis anhand der Version im GitHub-Repo
 - `style.css`: Styling und Themes
-- `background.js`: Service Worker für Hintergrundprozesse
+- `Ndot-55.otf`: Schriftart für den 8bit-Theme
+- `icons/`: Extension-Icons (32, 64, 128, 256, 512 px)

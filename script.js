@@ -28,6 +28,9 @@ async function init() {
   initOnOpenSettings();
   initQuickAccessSettings();
   updateBookmarksModeDisplay();
+
+  // Nicht awaiten: der Update-Check darf den Start nicht verzögern.
+  checkForUpdate();
 }
 
 document.addEventListener("DOMContentLoaded", init);
