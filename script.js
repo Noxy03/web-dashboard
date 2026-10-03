@@ -1,8 +1,7 @@
-// #### Globaler In-Memory-State
-// state wird einmal beim Start aus chrome.storage geladen (siehe storage.js)
-// und bei jeder Änderung per saveState() persistiert. `data` ist ein Alias
-// auf state.data, damit der Rest des Codes wie gewohnt "data.sets" etc.
-// verwenden kann.
+// #### Global in-memory state
+// state is loaded once at startup from chrome.storage (see storage.js)
+// and persisted via saveState() on every change. `data` is an alias for
+// state.data, so the rest of the code can keep using "data.sets" etc.
 let state = null;
 let data = null;
 
@@ -29,18 +28,18 @@ async function init() {
   initQuickAccessSettings();
   updateBookmarksModeDisplay();
 
-  // Nicht awaiten: der Update-Check darf den Start nicht verzögern.
+  // Don't await: the update check must never delay startup.
   checkForUpdate();
 }
 
 document.addEventListener("DOMContentLoaded", init);
 
-// #### Persistenz
+// #### Persistence
 async function saveData() {
   await saveState(state);
 }
 
-// #### Bookmarks-Integration
+// #### Bookmarks integration
 function loadBookmarksData() {
   return new Promise((resolve, reject) => {
     chrome.bookmarks.getTree((bookmarkTreeNodes) => {
@@ -137,8 +136,8 @@ async function loadData() {
       console.log("Bookmarks successfully loaded:", data);
     } catch (error) {
       console.warn("Error loading bookmarks:", error);
-      // Bookmarks-Ordner fehlt (noch) — im Bookmarks-Modus bleiben, aber
-      // mit den zuletzt gespeicherten Daten weiterarbeiten, statt zu crashen
+      // Bookmarks folder is missing (for now) — stay in bookmarks mode, but
+      // keep working with the last saved data instead of crashing
     }
   } else {
     data.currentSet = getInitialSet(data.setOrder);
@@ -171,7 +170,7 @@ function toggleBookmarksMode() {
           console.log("Switched to Bookmarks Mode");
         })
         .catch((error) => {
-          console.error("Fehler beim Laden der Bookmarks:", error);
+          console.error("Error loading bookmarks:", error);
           alert(
               "Dashboard folder not found! Please create a 'Dashboard' folder in your bookmarks with subfolders for tabs.",
           );
@@ -197,7 +196,7 @@ function refreshBookmarks() {
         console.log("Bookmarks updated");
       })
       .catch((error) => {
-        console.error("Fehler beim Aktualisieren der Bookmarks:", error);
+        console.error("Error updating bookmarks:", error);
         alert("Error updating bookmarks: " + error.message);
       });
 }
@@ -323,7 +322,7 @@ function buildAddTile() {
   return addTile;
 }
 
-// Nutzung eines Shortcuts tracken (für die Quick-Access-Leiste)
+// Track shortcut usage (for the quick access bar)
 function trackShortcutUse(sc) {
   sc.useCount = (sc.useCount || 0) + 1;
   sc.lastUsedAt = Date.now();
@@ -413,7 +412,7 @@ function bindTileEvents(tile, index) {
   });
 }
 
-// #### Quick-Access-Leiste (Meistgenutzt / Zuletzt genutzt / Kombiniert)
+// #### Quick access bar (most used / recently used / balanced)
 function computeQuickAccessScore(sc, mode) {
   const now = Date.now();
   const ageHours = sc.lastUsedAt ? (now - sc.lastUsedAt) / 3_600_000 : Infinity;
@@ -421,7 +420,7 @@ function computeQuickAccessScore(sc, mode) {
   if (mode === "useCount") return sc.useCount || 0;
   if (mode === "lastUsedAt") return sc.lastUsedAt || 0;
 
-  // balanced: Häufigkeit gewichtet mit Zeitverfall (klingt über ~24h ab)
+  // balanced: frequency weighted with time decay (fades out over ~24h)
   const recencyWeight = 1 / (1 + ageHours / 24);
   return (sc.useCount || 0) * recencyWeight;
 }
@@ -430,7 +429,7 @@ function getQuickAccessItems() {
   const settings = state.settings.quickAccessBar;
   if (!settings.enabled) return [];
 
-  // Set-übergreifend: alle Shortcuts aus allen Tabs, nicht nur dem aktiven.
+  // Across sets: all shortcuts from all tabs, not just the active one.
   const allShortcuts = Object.values(data.sets)
       .flat()
       .filter((sc) => sc.type !== "divider" && (sc.useCount || 0) > 0);
@@ -473,18 +472,18 @@ function renderQuickAccessBar() {
 
   fitQuickAccessItems();
 
-  // Bei Größenänderung der Leiste (Fenster resize, Sidebar, Zoom) neu
-  // berechnen, welche Items noch reinpassen. Einmalig einrichten.
+  // When the bar is resized (window resize, sidebar, zoom), recompute
+  // which items still fit. Set up only once.
   if (!quickAccessResizeObserver && "ResizeObserver" in window) {
     quickAccessResizeObserver = new ResizeObserver(() => fitQuickAccessItems());
     quickAccessResizeObserver.observe(bar);
   }
 }
 
-// Blendet von hinten (= niedrigster Score, da bereits sortiert) so viele
-// Items aus, bis der Rest wieder in die Breite der Leiste passt. Dadurch
-// bleiben immer die relevantesten Einträge sichtbar, zentriert, ohne
-// Scrollbalken und ohne abgeschnittene Icons/Labels.
+// Hides items from the end (= lowest score, since already sorted) until
+// the rest fits into the width of the bar again. This keeps the most
+// relevant entries visible and centered, with no scrollbar and no
+// clipped icons/labels.
 function fitQuickAccessItems() {
   const bar = document.getElementById("quickAccessBar");
   if (!bar) return;
@@ -971,7 +970,7 @@ function closeMoveModal() {
   currentMoveShortcutIndex = null;
 }
 
-// #### Daten Export / Import
+// #### Data export / import
 function exportData() {
   const payload = extractExportPayload(state);
   const blob = new Blob([JSON.stringify(payload, null, 2)], {
@@ -1021,7 +1020,7 @@ function importData(event) {
   reader.readAsText(file);
 }
 
-// #### Event-Listener (einmalig beim Start gebunden)
+// #### Event listeners (bound once at startup)
 function wireStaticEventListeners() {
   document
       .getElementById("darkModeBtn")
@@ -1088,7 +1087,7 @@ function wireStaticEventListeners() {
       .getElementById("importFileInput")
       .addEventListener("change", importData);
 
-  // Klick auf Overlay schließt das jeweilige Modal
+  // Clicking the overlay closes the respective modal
   const overlayCloseMap = {
     addModal: closeAddModal,
     setSettingsModal: closeSetSettingsModal,

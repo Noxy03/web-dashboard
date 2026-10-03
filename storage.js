@@ -1,22 +1,22 @@
-// #### Storage-Layer
-// Kapselt chrome.storage.local hinter einem einzigen Schema-Objekt.
-// Ersetzt die vorher verstreuten localStorage-Keys (dashboardData,
+// #### Storage layer
+// Wraps chrome.storage.local behind a single schema object.
+// Replaces the previously scattered localStorage keys (dashboardData,
 // useBookmarks, onOpenSetting, lastActiveTab, designMode).
 //
-// Warum chrome.storage.local statt window.localStorage:
-// - localStorage existiert nur im DOM-Kontext dieser Seite. Ein MV3
-//   Service-Worker (background.js) hat KEIN localStorage. Sobald irgendein
-//   anderer Kontext (Service Worker, Content-Script) mal Settings lesen
-//   muss, ist chrome.storage die einzige Option, die überall funktioniert.
-// - chrome.storage speichert bereits strukturierte Objekte, kein manuelles
-//   JSON.stringify/parse nötig.
-// - chrome.storage.onChanged erlaubt später Sync zwischen mehreren offenen
-//   New-Tab-Seiten, falls gewünscht.
+// Why chrome.storage.local instead of window.localStorage:
+// - localStorage only exists in the DOM context of this page. An MV3
+//   service worker (background.js) has NO localStorage. As soon as any
+//   other context (service worker, content script) needs to read settings,
+//   chrome.storage is the only option that works everywhere.
+// - chrome.storage already stores structured objects, no manual
+//   JSON.stringify/parse needed.
+// - chrome.storage.onChanged later allows syncing between multiple open
+//   new-tab pages, if desired.
 
 const STORAGE_ROOT_KEY = "dashboardState";
 const SCHEMA_VERSION = 2;
 
-// Legacy-Keys aus der alten localStorage-Version (für einmalige Migration)
+// Legacy keys from the old localStorage version (for one-time migration)
 const LEGACY_KEYS = {
     data: "dashboardData",
     useBookmarks: "useBookmarks",
@@ -31,7 +31,7 @@ function defaultState() {
         data: {
             sets: {
                 Default: [
-                    { name: "Startpage", url: "https://www.startpage.com/", type: "link" },
+                    { name: "Google", url: "https://www.google.de", type: "link" },
                     { name: "Wikipedia", url: "https://www.wikipedia.org", type: "link" },
                 ],
             },
@@ -48,8 +48,8 @@ function defaultState() {
     };
 }
 
-// Einmalige Migration: Falls chrome.storage noch leer ist, aber alte
-// localStorage-Daten existieren, übernimm sie ins neue Schema.
+// One-time migration: if chrome.storage is still empty but old
+// localStorage data exists, carry it over into the new schema.
 function migrateFromLocalStorage() {
     const state = defaultState();
     let foundLegacyData = false;
@@ -100,7 +100,7 @@ function migrateFromLocalStorage() {
 }
 
 function migrate(state) {
-    // Schema-Lücken auffüllen (z.B. nach einem Update, das neue Felder einführt)
+    // Fill schema gaps (e.g. after an update that introduces new fields)
     const defaults = defaultState();
     state.data = state.data || defaults.data;
     state.data.setOrder = state.data.setOrder || Object.keys(state.data.sets || {});
@@ -120,7 +120,7 @@ async function loadState() {
         return migrate(stored);
     }
 
-    // Nichts in chrome.storage — prüfen, ob alte localStorage-Daten existieren
+    // Nothing in chrome.storage — check whether old localStorage data exists
     const migrated = migrateFromLocalStorage();
     if (migrated) {
         console.log("Old localStorage data found and migrated.");
@@ -135,7 +135,7 @@ async function saveState(state) {
     await chrome.storage.local.set({ [STORAGE_ROOT_KEY]: state });
 }
 
-// Für Export/Import: nur der data-Teil, wie beim alten Format
+// For export/import: only the data part, as in the old format
 function extractExportPayload(state) {
     return {
         sets: state.data.sets,

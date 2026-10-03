@@ -1,30 +1,29 @@
-// #### Update-Check
-// Prüft beim Start, ob die manifest.json im GitHub-Repo eine neuere Version
-// hat als die installierte, und zeigt dann einen dezenten Hinweis an.
+// #### Update check
+// On startup, checks whether the manifest.json in the GitHub repo has a
+// newer version than the installed one, and shows a subtle notice if so.
 //
-// Wichtig: Die Extension aktualisiert sich NICHT selbst. Eine entpackte
-// Extension kann ihre Dateien nicht überschreiben, und MV3 verbietet
-// nachgeladenen Code. Der Hinweis erinnert nur daran, auf dem Gerät
-// `git pull` auszuführen und die Extension neu zu laden.
+// Important: the extension does NOT update itself. An unpacked extension
+// cannot overwrite its own files, and MV3 forbids remotely hosted code.
+// The notice only reminds you to run `git pull` on this device and reload
+// the extension.
 //
-// Ablauf:
-// - Remote-Version wird höchstens alle UPDATE_CHECK_INTERVAL_MS geholt.
-// - Die zuletzt bekannte Remote-Version wird gespeichert, damit der Hinweis
-//   auch zwischen den Checks angezeigt wird und nach dem Update (installierte
-//   Version == bekannte Version) von selbst verschwindet.
-// - Eigener Storage-Key statt dashboardState: Der Check schreibt asynchron
-//   nach einem Netzwerk-Request und darf deshalb nicht den gesamten State
-//   (Shortcuts, Sets) einer evtl. veralteten Seite überschreiben.
+// How it works:
+// - The remote version is fetched at most once per UPDATE_CHECK_INTERVAL_MS.
+// - The last known remote version is stored, so the notice is also shown
+//   between checks and disappears on its own after the update (installed
+//   version == known version).
+// - Separate storage key instead of dashboardState: the check writes
+//   asynchronously after a network request and therefore must not overwrite
+//   the entire state (shortcuts, sets) from a possibly stale page.
 
-// <USER> und <REPO> ersetzen (öffentliches Repo, nur Code – keine Export-Dateien committen!)
 const UPDATE_MANIFEST_URL =
     "https://raw.githubusercontent.com/Noxy03/web-dashboard/main/manifest.json";
 const UPDATE_CHECK_STORAGE_KEY = "updateCheck";
-const UPDATE_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6 Stunden
+const UPDATE_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6 hours
 const UPDATE_FETCH_TIMEOUT_MS = 5000;
 const VERSION_PATTERN = /^\d+(\.\d+){0,3}$/;
 
-// Vergleicht zwei Versionsstrings ("1.10.0" > "1.9.2"). Rückgabe: -1, 0, 1
+// Compares two version strings ("1.10.0" > "1.9.2"). Returns -1, 0 or 1
 function compareVersions(a, b) {
     const pa = String(a).split(".").map((n) => parseInt(n, 10) || 0);
     const pb = String(b).split(".").map((n) => parseInt(n, 10) || 0);
@@ -46,7 +45,7 @@ async function fetchRemoteVersion() {
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const remote = await res.json();
-        // Format validieren: Der Wert landet im UI und im Storage.
+        // Validate the format: the value ends up in the UI and in storage.
         if (typeof remote.version !== "string" || !VERSION_PATTERN.test(remote.version)) {
             throw new Error("Invalid version field in remote manifest");
         }
@@ -95,9 +94,8 @@ function showUpdateBanner(latestVersion, installedVersion, info) {
     document.body.appendChild(banner);
 }
 
-// Wird in init() bewusst nicht awaited: Der Check darf den Start nie bremsen.
+// Intentionally not awaited in init(): the check must never slow down startup.
 async function checkForUpdate() {
-    if (UPDATE_MANIFEST_URL.includes("<USER>") || UPDATE_MANIFEST_URL.includes("<REPO>")) return; // noch nicht konfiguriert
 
     try {
         const installed = chrome.runtime.getManifest().version;
@@ -109,8 +107,8 @@ async function checkForUpdate() {
                 info.lastChecked = Date.now();
                 await saveUpdateInfo(info);
             } catch (e) {
-                // Offline, Rate-Limit, Repo nicht erreichbar ... → still ignorieren,
-                // beim nächsten Start wird erneut versucht.
+                // Offline, rate limit, repo unreachable ... → ignore silently,
+                // it will be retried on the next start.
                 console.warn("Update check failed:", e);
             }
         }

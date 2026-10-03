@@ -12,8 +12,8 @@ body {
           color 0.3s;
 }
 
-/* Fallback-Variablen, bevor script.js das gespeicherte Theme setzt
-   (verhindert Flash of Unstyled Content beim Laden) */
+/* Fallback variables before script.js applies the saved theme
+   (prevents a flash of unstyled content on load) */
 :root {
   --bg: #f0f4f9;
   --text: #3c4043;
@@ -75,7 +75,7 @@ body {
   --info-box-text: #000000;
 }
 
-/* System-Fallback (nur relevant, bevor das gespeicherte Theme greift) */
+/* System fallback (only relevant before the saved theme is applied) */
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #1a1a1a;
@@ -315,16 +315,15 @@ header {
   display: block;
 }
 
-/* Quick-Access-Leiste (Meistgenutzt / Zuletzt genutzt / Kombiniert)
-   min-height statt display:none im Leerzustand: reserviert den Platz
-   dauerhaft, damit das Layout beim Ein-/Ausblenden von Items oder beim
-   ersten Laden (noch keine Nutzung getrackt) nicht springt. overflow:
-   hidden statt scroll — Items, die nicht mehr reinpassen, werden von
-   fitQuickAccessItems() in script.js komplett ausgeblendet statt
-   abgeschnitten oder scrollbar gemacht. */
+/* Quick access bar (most used / recently used / balanced)
+   min-height instead of display:none when empty: permanently reserves the
+   space so the layout doesn't jump when items are shown/hidden or on the
+   first load (no usage tracked yet). overflow: hidden instead of scroll —
+   items that no longer fit are hidden completely by fitQuickAccessItems()
+   in script.js instead of being clipped or made scrollable. */
 .quick-access-bar {
   display: flex;
-  flex: 1; /* füllt die Breite von .header-row, sonst wirkt "center" wie left */
+  flex: 1; /* fills the width of .header-row, otherwise "center" behaves like left */
   flex-wrap: nowrap;
   gap: 0.6rem;
   overflow: hidden;
@@ -790,8 +789,8 @@ label {
 }
 
 /* ==========================================================================
-   Themes — jedes Theme setzt nur die Variablen von oben.
-   Neue Themes hinzufügen = neuer Block mit denselben Variablennamen.
+   Themes — each theme only sets the variables from above.
+   Adding a theme = a new block with the same variable names.
    ========================================================================== */
 
 /* Light Mode */
@@ -1036,7 +1035,7 @@ body[data-theme="catppuccin-mocha"] .modal-content button.cancel {
   color: #cdd6f4;
 }
 
-/* 8bit Mode — Variablen + eigene Effekte (CRT-Overlay, Cursor, Font) */
+/* 8bit Mode — variables + custom effects (CRT overlay, cursor, font) */
 body[data-theme="eightbit-mode"] {
   --bg: #001100;
   --text: #00ff00;
@@ -1249,7 +1248,7 @@ body[data-theme="eightbit-mode"] :disabled {
           not-allowed;
 }
 
-/* Update-Hinweis (update-check.js). z-index unter den Modals (10). */
+/* Update notice (update-check.js). z-index below the modals (10). */
 #updateBanner {
   position: fixed;
   bottom: 16px;

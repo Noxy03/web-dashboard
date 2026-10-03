@@ -1,118 +1,118 @@
 # My Dashboard New Tab – Chrome Extension
 
-Ein personalisierbares Dashboard als neue Tab-Seite für Chrome, optional mit Bookmarks-Integration.
+A customizable dashboard as the new tab page for Chrome, optionally with bookmarks integration.
 
 ## Features
 
-- **Zwei Datenquellen**: Chrome-Bookmarks (Ordner "Dashboard") oder manuell verwaltete Shortcuts
-- **Tabs (Sets)**: Shortcuts sind in Sets gruppiert, die als Tabs angezeigt werden
-- **Drag & Drop**: Shortcuts, Trennlinien und Tabs lassen sich per Drag & Drop neu anordnen
-- **Trennlinien**: Horizontale und vertikale Linien zur Strukturierung
-- **Quick-Access-Leiste**: Zeigt die meistgenutzten, zuletzt genutzten oder (kombiniert) beste Shortcuts, Anzahl einstellbar (3–12)
-- **Themes**: Light, Dark, Minimal, Catppuccin Mocha und 8bit
-- **Startverhalten**: Zuletzt geöffneten Tab merken oder immer einen bestimmten Tab öffnen
-- **Export / Import**: Sets und Shortcuts als JSON sichern und wiederherstellen
+- **Two data sources**: Chrome bookmarks (folder "Dashboard") or manually managed shortcuts
+- **Tabs (sets)**: Shortcuts are grouped into sets, which are shown as tabs
+- **Drag & drop**: Shortcuts, dividers and tabs can be rearranged via drag & drop
+- **Dividers**: Horizontal and vertical lines to structure the layout
+- **Quick access bar**: Shows the most used, recently used or (combined) best shortcuts, number of items adjustable (3–12)
+- **Themes**: Light, Dark, Minimal, Catppuccin Mocha and 8bit
+- **Startup behavior**: Remember the last opened tab or always open a specific tab
+- **Export / import**: Back up and restore sets and shortcuts as JSON
 
 ## Installation
 
-1. Lade die Extension-Dateien herunter
-2. Öffne Chrome und gehe zu `chrome://extensions/`
-3. Aktiviere den "Entwicklermodus"
-4. Klicke auf "Entpackte Erweiterung laden"
-5. Wähle den Ordner mit den Extension-Dateien aus
+1. Download the extension files
+2. Open Chrome and go to `chrome://extensions/`
+3. Enable "Developer mode"
+4. Click "Load unpacked"
+5. Select the folder containing the extension files
 
-## Verwendung
+## Usage
 
-### Shortcuts hinzufügen und bearbeiten
-- Über das "+" Symbol Name und URL eingeben (oder eine Trennlinie hinzufügen)
-- Über die Shortcut-Einstellungen können Shortcuts bearbeitet, in ein anderes Set verschoben oder gelöscht werden
+### Adding and editing shortcuts
+- Use the "+" icon to enter a name and URL (or add a divider)
+- In the shortcut settings, shortcuts can be edited, moved to another set or deleted
 
-### Tabs verwalten
-- Klicke auf das Menü-Symbol (☰) neben den Tabs
-- Sets erstellen, umbenennen oder löschen
-- Reihenfolge der Tabs per Drag & Drop ändern
+### Managing tabs
+- Click the menu icon (☰) next to the tabs
+- Create, rename or delete sets
+- Change the order of tabs via drag & drop
 
-### Einstellungen (⚙️)
-- Theme wählen
-- Startverhalten festlegen
-- Bookmarks-Modus ein-/ausschalten und Bookmarks aktualisieren
-- Quick-Access-Leiste konfigurieren
-- Daten exportieren / importieren
+### Settings (⚙️)
+- Choose a theme
+- Set the startup behavior
+- Toggle bookmarks mode and refresh bookmarks
+- Configure the quick access bar
+- Export / import data
 
-## Bookmarks-Modus
+## Bookmarks mode
 
-### 1. Dashboard-Ordner erstellen
+### 1. Create the Dashboard folder
 
-1. Öffne `chrome://bookmarks/`
-2. Erstelle einen Ordner namens **"Dashboard"**
-3. Erstelle darin Unterordner für deine Tabs (z.B. "Arbeit", "Privat")
+1. Open `chrome://bookmarks/`
+2. Create a folder named **"Dashboard"**
+3. Create subfolders inside it for your tabs (e.g. "Work", "Private")
 
-### 2. Bookmarks hinzufügen
+### 2. Add bookmarks
 
-Jeder Unterordner wird zu einem Tab, jedes Bookmark darin zu einem Shortcut.
+Each subfolder becomes a tab, each bookmark inside it becomes a shortcut.
 
 ```
 Bookmarks
 └── Dashboard
-    ├── Arbeit
+    ├── Work
     │   ├── Gmail
     │   ├── Google Drive
     │   └── Slack
-    └── Privat
+    └── Private
         ├── YouTube
         └── Wikipedia
 ```
 
-### 3. Aktivieren
+### 3. Activate
 
-1. Öffne die Einstellungen (⚙️)
-2. Klicke auf "Bookmarks Mode"
-3. Mit "Refresh Bookmarks" werden Änderungen sofort übernommen
+1. Open the settings (⚙️)
+2. Click "Bookmarks Mode"
+3. "Refresh Bookmarks" applies changes immediately
 
-Wird kein "Dashboard"-Ordner gefunden, erscheint eine Meldung und das Dashboard wechselt zurück in den manuellen Modus.
+If no "Dashboard" folder is found, a message is shown and the dashboard switches back to manual mode.
 
-## Manueller Modus (Standard)
+## Manual mode (default)
 
-Sets und Shortcuts werden direkt im Dashboard verwaltet und lokal in `chrome.storage.local` gespeichert. Daten aus älteren Versionen (`localStorage`) werden beim ersten Start automatisch übernommen.
+Sets and shortcuts are managed directly in the dashboard and stored locally in `chrome.storage.local`. Data from older versions (`localStorage`) is migrated automatically on first start.
 
-## Technische Details
+## Updates across multiple devices
 
-- **Manifest Version**: 3
-- **Berechtigungen**: `bookmarks`, `storage`, Host-Zugriff auf `raw.githubusercontent.com` (nur für den Update-Check)
-- **Datenspeicher**: `chrome.storage.local` (Schema-Version 2, siehe `storage.js`)
-- **Shortcut-Icons**: Favicons über den Google-Favicon-Dienst
-- **UI-Icons**: Font Awesome 6 (per CDN)
-- **Themes**: CSS über `data-theme`-Attribut am `body`
+The extension does not update itself (unpacked extensions cannot overwrite their own files, and MV3 forbids remotely hosted code). Instead:
 
-## Updates auf mehreren Geräten
+1. Clone the repo on each device and load the clone as an unpacked extension in `chrome://extensions/`
+2. On startup, `update-check.js` checks (at most every 6 hours) whether the `manifest.json` on GitHub has a newer `version` and shows a notice if so
+3. Run `git pull` on the device. Changes to HTML/JS/CSS usually apply on the next new tab; for manifest changes, reload the extension
 
-Die Extension aktualisiert sich nicht selbst (entpackte Extensions können ihre Dateien nicht überschreiben, MV3 verbietet nachgeladenen Code). Stattdessen:
+Setup: replace `<USER>` and `<REPO>` in `update-check.js` (`UPDATE_MANIFEST_URL`) and in `host_permissions` of `manifest.json`. The repo must be public. Bump the `version` in `manifest.json` whenever you publish a change. Export files containing personal data do not belong in the repo.
 
-1. Repo auf jedem Gerät klonen und den Klon in `chrome://extensions/` als entpackte Extension laden
-2. Beim Start prüft `update-check.js` (höchstens alle 6 Stunden), ob die `manifest.json` auf GitHub eine neuere `version` hat, und zeigt dann einen Hinweis
-3. Auf dem Gerät `git pull` ausführen. Änderungen an HTML/JS/CSS greifen meist beim nächsten neuen Tab, bei Änderungen am Manifest die Extension neu laden
+Data (sets, shortcuts, settings) is stored per device in `chrome.storage.local` and is not synchronized via GitHub.
 
-Einrichtung: `<USER>` und `<REPO>` in `update-check.js` (`UPDATE_MANIFEST_URL`) und in `host_permissions` der `manifest.json` ersetzen. Das Repo muss öffentlich sein. Beim Veröffentlichen einer Änderung die `version` in `manifest.json` erhöhen. Export-Dateien mit persönlichen Daten gehören nicht ins Repo.
+## Technical details
 
-Die Daten (Sets, Shortcuts, Einstellungen) liegen pro Gerät in `chrome.storage.local` und werden nicht über GitHub synchronisiert.
+- **Manifest version**: 3
+- **Permissions**: `bookmarks`, `storage`, host access to `raw.githubusercontent.com` (only for the update check)
+- **Data storage**: `chrome.storage.local` (schema version 2, see `storage.js`)
+- **Shortcut icons**: Favicons via the Google favicon service
+- **UI icons**: Font Awesome 6 (via CDN)
+- **Themes**: CSS via the `data-theme` attribute on `body`
 
 ## Troubleshooting
 
-### Bookmarks werden nicht geladen
-1. Prüfe, ob ein Ordner "Dashboard" mit Unterordnern existiert
-2. Klicke in den Einstellungen auf "Refresh Bookmarks"
+### Bookmarks are not loaded
+1. Check that a "Dashboard" folder with subfolders exists
+2. Click "Refresh Bookmarks" in the settings
 
-### Extension funktioniert nicht
-1. Prüfe die Chrome-Konsole auf Fehlermeldungen
-2. Lade die Extension in `chrome://extensions/` neu
+### Extension does not work
+1. Check the Chrome console for error messages
+2. Reload the extension in `chrome://extensions/`
 
-## Projektstruktur
+## Project structure
 
-- `manifest.json`: Extension-Konfiguration
-- `index.html`: Haupt-Interface
-- `script.js`: Funktionalität und Logik
-- `storage.js`: Storage-Layer (`chrome.storage.local`, Migration, Schema)
-- `update-check.js`: Update-Hinweis anhand der Version im GitHub-Repo
-- `style.css`: Styling und Themes
-- `Ndot-55.otf`: Schriftart für den 8bit-Theme
-- `icons/`: Extension-Icons (32, 64, 128, 256, 512 px)
+- `manifest.json`: Extension configuration
+- `index.html`: Main interface
+- `script.js`: Functionality and logic
+- `storage.js`: Storage layer (`chrome.storage.local`, migration, schema)
+- `update-check.js`: Update notice based on the version in the GitHub repo
+- `style.css`: Styling and themes
+- `Ndot-55.otf`: Font for the 8bit theme
+- `icons/`: Extension icons (32, 64, 128, 256, 512 px)
