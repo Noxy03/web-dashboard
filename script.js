@@ -467,6 +467,19 @@ function renderQuickAccessBar() {
       window.location.href = sc.url;
     });
 
+    // Middle mouse button: open in a new tab (same as the shortcut tiles).
+    // mousedown is blocked so Chrome does not start autoscroll.
+    item.addEventListener("mousedown", (e) => {
+      if (e.button === 1) e.preventDefault();
+    });
+    item.addEventListener("auxclick", (e) => {
+      if (e.button === 1) {
+        e.preventDefault();
+        trackShortcutUse(sc);
+        window.open(sc.url, "_blank");
+      }
+    });
+
     bar.appendChild(item);
   });
 
