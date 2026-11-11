@@ -1,4 +1,4 @@
-# My Dashboard New Tab – Chrome Extension
+# Noxy's Dashboard – Chrome Extension
 
 A customizable dashboard as the new tab page for Chrome, optionally with bookmarks integration.
 
