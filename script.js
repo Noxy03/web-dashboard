@@ -4,6 +4,8 @@
 // state.data, so the rest of the code can keep using "data.sets" etc.
 let state = null;
 let data = null;
+// Shortcut usage per URL (see storage.js), used by the quick access bar
+let usageStats = {};
 
 let currentEditShortcutIndex = null;
 let currentMoveShortcutIndex = null;
@@ -15,6 +17,11 @@ let draggedTabIndex = null;
 async function init() {
   state = await loadState();
   data = state.data;
+
+  // Before loadData(): in bookmarks mode it replaces data.sets, and the
+  // one-time migration needs the stored sets.
+  usageStats = await loadUsageStats(data.sets);
+  if (stripLegacyUsage(data.sets)) await saveData();
 
   applyTheme(state.settings.theme, { skipSave: true });
 
@@ -28,6 +35,13 @@ async function init() {
   initQuickAccessSettings();
   updateBookmarksModeDisplay();
 
+  watchStorageChanges({
+    onState: applyExternalState,
+    onUsage: (stats) => {
+      usageStats = stats;
+    },
+  });
+
   // Don't await: the update check must never delay startup.
   checkForUpdate();
 }
@@ -37,6 +51,34 @@ document.addEventListener("DOMContentLoaded", init);
 // #### Persistence
 async function saveData() {
   await saveState(state);
+}
+
+// Another open dashboard page changed the state. Adopt it right away so our
+// next save does not overwrite those changes with a stale copy.
+function applyExternalState(newState) {
+  const previousSet = data.currentSet;
+  state = newState;
+  data = state.data;
+  data.currentSet = data.sets[previousSet]
+      ? previousSet
+      : getInitialSet(data.setOrder);
+
+  // These modals work with list indexes that may have shifted: close them
+  ["addModal", "moveModal", "shortcutSettingsModal"].forEach((id) => {
+    document.getElementById(id).style.display = "none";
+  });
+  currentEditShortcutIndex = null;
+  currentMoveShortcutIndex = null;
+  isAddMode = false;
+
+  applyTheme(state.settings.theme, { skipSave: true });
+  renderSetTabs();
+  renderShortcuts();
+  renderQuickAccessBar();
+  renderSetSettingsOptions();
+  initOnOpenSettings();
+  initQuickAccessSettings();
+  updateBookmarksModeDisplay();
 }
 
 // #### Bookmarks integration
@@ -75,8 +117,6 @@ function parseBookmarksTree(bookmarkTreeNodes) {
               name: bookmark.title || "Untitled",
               url: bookmark.url,
               type: "link",
-              useCount: 0,
-              lastUsedAt: null,
             }));
 
         if (shortcuts.length > 0) {
@@ -322,12 +362,16 @@ function buildAddTile() {
   return addTile;
 }
 
-// Track shortcut usage (for the quick access bar)
-function trackShortcutUse(sc) {
-  sc.useCount = (sc.useCount || 0) + 1;
-  sc.lastUsedAt = Date.now();
-  saveData();
-  renderQuickAccessBar();
+// Track shortcut usage (for the quick access bar). Callers that navigate
+// away in the same tab should await this so the write is not cut off. It
+// deliberately does not re-render the bar: the order would jump around
+// while the page is still open (e.g. after a middle click).
+async function trackShortcutUse(url) {
+  try {
+    usageStats = await recordUsage(url);
+  } catch (e) {
+    console.warn("Could not record shortcut usage:", e);
+  }
 }
 
 function handleDragStart(e) {
@@ -349,7 +393,7 @@ function handleDragOver(e) {
   this.classList.add("drag-over");
 }
 
-function handleDragLeave(e) {
+function handleDragLeave() {
   this.classList.remove("drag-over");
 }
 
@@ -370,7 +414,7 @@ function handleDrop(e) {
 }
 
 function bindTileEvents(tile, index) {
-  tile.addEventListener("click", function (e) {
+  tile.addEventListener("click", async function (e) {
     if (
         !e.target.closest(".shortcutSettings-btn, .edit-btn") &&
         !tile.classList.contains("add-tile")
@@ -378,7 +422,7 @@ function bindTileEvents(tile, index) {
       const link = tile.querySelector("a");
       if (link) {
         const sc = data.sets[data.currentSet][index];
-        if (sc) trackShortcutUse(sc);
+        if (sc) await trackShortcutUse(sc.url);
         window.location.href = link.href;
       }
     }
@@ -396,7 +440,7 @@ function bindTileEvents(tile, index) {
       const link = tile.querySelector("a");
       if (link) {
         const sc = data.sets[data.currentSet][index];
-        if (sc) trackShortcutUse(sc);
+        if (sc) trackShortcutUse(sc.url);
         window.open(link.href, "_blank");
       }
     }
@@ -413,16 +457,17 @@ function bindTileEvents(tile, index) {
 }
 
 // #### Quick access bar (most used / recently used / balanced)
-function computeQuickAccessScore(sc, mode) {
-  const now = Date.now();
-  const ageHours = sc.lastUsedAt ? (now - sc.lastUsedAt) / 3_600_000 : Infinity;
+function computeQuickAccessScore(usage, mode) {
+  const count = usage.count || 0;
+  const lastUsedAt = usage.lastUsedAt || 0;
+  const ageHours = lastUsedAt ? (Date.now() - lastUsedAt) / 3_600_000 : Infinity;
 
-  if (mode === "useCount") return sc.useCount || 0;
-  if (mode === "lastUsedAt") return sc.lastUsedAt || 0;
+  if (mode === "useCount") return count;
+  if (mode === "lastUsedAt") return lastUsedAt;
 
   // balanced: frequency weighted with time decay (fades out over ~24h)
   const recencyWeight = 1 / (1 + ageHours / 24);
-  return (sc.useCount || 0) * recencyWeight;
+  return count * recencyWeight;
 }
 
 function getQuickAccessItems() {
@@ -430,12 +475,23 @@ function getQuickAccessItems() {
   if (!settings.enabled) return [];
 
   // Across sets: all shortcuts from all tabs, not just the active one.
-  const allShortcuts = Object.values(data.sets)
-      .flat()
-      .filter((sc) => sc.type !== "divider" && (sc.useCount || 0) > 0);
+  // The same URL in several sets only shows up once.
+  const seenUrls = new Set();
+  const candidates = [];
 
-  return allShortcuts
-      .map((sc) => ({ sc, score: computeQuickAccessScore(sc, settings.mode) }))
+  Object.values(data.sets)
+      .flat()
+      .forEach((sc) => {
+        if (sc.type === "divider" || !sc.url || seenUrls.has(sc.url)) return;
+        seenUrls.add(sc.url);
+
+        const usage = usageStats[sc.url];
+        if (usage && usage.count > 0) {
+          candidates.push({ sc, score: computeQuickAccessScore(usage, settings.mode) });
+        }
+      });
+
+  return candidates
       .sort((a, b) => b.score - a.score)
       .slice(0, settings.count)
       .map((x) => x.sc);
@@ -462,8 +518,8 @@ function renderQuickAccessBar() {
     label.textContent = sc.name;
 
     item.append(img, label);
-    item.addEventListener("click", () => {
-      trackShortcutUse(sc);
+    item.addEventListener("click", async () => {
+      await trackShortcutUse(sc.url);
       window.location.href = sc.url;
     });
 
@@ -475,7 +531,7 @@ function renderQuickAccessBar() {
     item.addEventListener("auxclick", (e) => {
       if (e.button === 1) {
         e.preventDefault();
-        trackShortcutUse(sc);
+        trackShortcutUse(sc.url);
         window.open(sc.url, "_blank");
       }
     });
@@ -689,7 +745,7 @@ function addDivider(orientation) {
 }
 
 function bindDividerEvents(divider) {
-  divider.addEventListener("click", function (e) {
+  divider.addEventListener("click", function () {
     if (confirm("Delete divider?")) {
       const index = parseInt(divider.dataset.index);
       data.sets[data.currentSet].splice(index, 1);
@@ -872,21 +928,71 @@ function closeAddModal() {
   isAddMode = false;
 }
 
+// Turns user input into a usable http(s) URL, or returns null if it isn't one.
+// - "google.com" / "www.x.de/path" -> "https://..." (without a scheme the link
+//   would be resolved relative to the extension: chrome-extension://<id>/google.com)
+// - "localhost:3000" and loopback addresses get "http://", since local
+//   services rarely speak https
+// - other schemes (javascript:, data:, mailto:, file://, chrome:// ...) are rejected
+// The text is kept as typed (no trailing slash added) so existing URLs and
+// their usage statistics keep matching.
+function normalizeUrl(input) {
+  const text = input.trim();
+  if (text === "" || /\s/.test(text)) return null;
+
+  let candidate;
+  if (/^https?:\/\//i.test(text)) {
+    candidate = text;
+  } else if (/^[a-z][a-z0-9+.-]*:(?!\d+([\/?#]|$))/i.test(text)) {
+    return null; // some other scheme (host:port like "localhost:3000" is excluded above)
+  } else if (text.startsWith("//")) {
+    candidate = "https:" + text;
+  } else {
+    const isLocal = /^(localhost|127(\.\d+){3}|\[::1])([:\/?#]|$)/i.test(text);
+    candidate = (isLocal ? "http://" : "https://") + text;
+  }
+
+  try {
+    const url = new URL(candidate);
+    if ((url.protocol !== "http:" && url.protocol !== "https:") || !url.hostname) {
+      return null;
+    }
+  } catch (e) {
+    return null;
+  }
+  return candidate;
+}
+
 function saveEdit(event) {
   if (event) event.stopPropagation();
   const newName = document.getElementById("editName").value.trim();
-  const newUrl = document.getElementById("editUrl").value.trim();
+  const rawUrl = document.getElementById("editUrl").value.trim();
   const currentSet = data.sets[data.currentSet];
 
-  if (newName === "" || newUrl === "") {
+  if (newName === "" || rawUrl === "") {
     alert("Please fill in both fields.");
     return;
   }
 
+  const newUrl = normalizeUrl(rawUrl);
+  if (!newUrl) {
+    alert("Please enter a valid web address (http or https).");
+    return;
+  }
+
   if (isAddMode) {
-    currentSet.push({ name: newName, url: newUrl, type: "link", useCount: 0, lastUsedAt: null });
+    currentSet.push({ name: newName, url: newUrl, type: "link" });
   } else if (currentEditShortcutIndex !== null) {
     const existing = currentSet[currentEditShortcutIndex];
+    if (existing.url !== newUrl) {
+      // Keep the usage history when only the URL changes
+      copyUsage(existing.url, newUrl)
+          .then((stats) => {
+            usageStats = stats;
+            renderQuickAccessBar();
+          })
+          .catch((e) => console.warn("Could not carry over usage stats:", e));
+    }
     currentSet[currentEditShortcutIndex] = {
       ...existing,
       name: newName,
@@ -985,7 +1091,7 @@ function closeMoveModal() {
 
 // #### Data export / import
 function exportData() {
-  const payload = extractExportPayload(state);
+  const payload = extractExportPayload(state, usageStats);
   const blob = new Blob([JSON.stringify(payload, null, 2)], {
     type: "application/json",
   });
@@ -1015,6 +1121,15 @@ function importData(event) {
         data.sets = importedData.sets;
         data.currentSet = importedData.currentSet;
         data.setOrder = importedData.setOrder || Object.keys(importedData.sets);
+
+        // New exports carry "usage"; old ones have counters inside the shortcuts
+        const importedUsage =
+            importedData.usage && typeof importedData.usage === "object"
+                ? importedData.usage
+                : collectLegacyUsage(importedData.sets);
+        stripLegacyUsage(data.sets);
+        usageStats = await replaceUsageStats(importedUsage);
+
         await saveData();
         renderSetTabs();
         renderShortcuts();
@@ -1031,6 +1146,9 @@ function importData(event) {
     }
   };
   reader.readAsText(file);
+
+  // Reset so importing the same file again triggers "change" again
+  event.target.value = "";
 }
 
 // #### Event listeners (bound once at startup)

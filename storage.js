@@ -131,15 +131,123 @@ async function loadState() {
     return defaultState();
 }
 
+// Every open new-tab page keeps its own in-memory copy of the state and
+// writes the whole object back on each change. Without a guard, a page that
+// has been open for a while would overwrite changes made in another page.
+// PAGE_ID marks who wrote the state, so a page can ignore its own writes in
+// chrome.storage.onChanged and adopt everything else (see watchStorageChanges).
+const PAGE_ID = Math.random().toString(36).slice(2) + Date.now().toString(36);
+
 async function saveState(state) {
+    state._writer = PAGE_ID;
     await chrome.storage.local.set({ [STORAGE_ROOT_KEY]: state });
 }
 
+// Calls onState(newState) when ANOTHER page changed the dashboard state and
+// onUsage(newStats) when the usage statistics changed (from any page).
+function watchStorageChanges({ onState, onUsage }) {
+    chrome.storage.onChanged.addListener((changes, area) => {
+        if (area !== "local") return;
+
+        const stateChange = changes[STORAGE_ROOT_KEY];
+        if (stateChange && stateChange.newValue && stateChange.newValue._writer !== PAGE_ID) {
+            onState(migrate(stateChange.newValue));
+        }
+
+        const usageChange = changes[USAGE_STORAGE_KEY];
+        if (usageChange) onUsage(usageChange.newValue || {});
+    });
+}
+
+// #### Usage statistics (quick access bar)
+// Stored under its own key and indexed by URL, NOT inside the shortcut
+// objects. Reasons:
+// - Bookmarks mode rebuilds all shortcuts from the bookmarks on every start,
+//   which used to reset the counters to 0.
+// - The same URL in several sets is counted once.
+// - Recording a click is a small read-modify-write of this key only, so it
+//   cannot overwrite sets/settings with a stale copy.
+// Shape: { "<url>": { count: number, lastUsedAt: number|null } }
+const USAGE_STORAGE_KEY = "usageStats";
+
+// Builds stats from the old per-shortcut useCount/lastUsedAt fields
+// (one-time migration, also used for old export files).
+function collectLegacyUsage(sets) {
+    const stats = {};
+    Object.values(sets || {}).forEach((list) => {
+        (list || []).forEach((sc) => {
+            if (!sc || sc.type === "divider" || !sc.url || !(sc.useCount > 0)) return;
+            const entry = stats[sc.url] || { count: 0, lastUsedAt: null };
+            entry.count += sc.useCount;
+            entry.lastUsedAt = Math.max(entry.lastUsedAt || 0, sc.lastUsedAt || 0) || null;
+            stats[sc.url] = entry;
+        });
+    });
+    return stats;
+}
+
+// Removes the old fields from the shortcuts. Returns true if anything changed.
+function stripLegacyUsage(sets) {
+    let changed = false;
+    Object.values(sets || {}).forEach((list) => {
+        (list || []).forEach((sc) => {
+            if (sc && ("useCount" in sc || "lastUsedAt" in sc)) {
+                delete sc.useCount;
+                delete sc.lastUsedAt;
+                changed = true;
+            }
+        });
+    });
+    return changed;
+}
+
+async function readUsageStats() {
+    const result = await chrome.storage.local.get(USAGE_STORAGE_KEY);
+    return result[USAGE_STORAGE_KEY] || null;
+}
+
+async function writeUsageStats(stats) {
+    await chrome.storage.local.set({ [USAGE_STORAGE_KEY]: stats });
+    return stats;
+}
+
+// legacySets: the stored sets, only used if no statistics exist yet.
+async function loadUsageStats(legacySets) {
+    const stored = await readUsageStats();
+    if (stored) return stored;
+    return writeUsageStats(collectLegacyUsage(legacySets));
+}
+
+async function recordUsage(url) {
+    const stats = (await readUsageStats()) || {};
+    const entry = stats[url] || { count: 0, lastUsedAt: null };
+    entry.count += 1;
+    entry.lastUsedAt = Date.now();
+    stats[url] = entry;
+    return writeUsageStats(stats);
+}
+
+// A shortcut got a new URL: it keeps its history (unless the new URL
+// already has one).
+async function copyUsage(oldUrl, newUrl) {
+    const stats = (await readUsageStats()) || {};
+    if (stats[oldUrl] && !stats[newUrl]) {
+        stats[newUrl] = { ...stats[oldUrl] };
+        return writeUsageStats(stats);
+    }
+    return stats;
+}
+
+async function replaceUsageStats(stats) {
+    return writeUsageStats(stats || {});
+}
+
 // For export/import: only the data part, as in the old format
-function extractExportPayload(state) {
+function extractExportPayload(state, usage) {
     return {
         sets: state.data.sets,
         currentSet: state.data.currentSet,
         setOrder: state.data.setOrder,
+        usage: usage || {},
     };
 }

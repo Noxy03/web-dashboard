@@ -8,10 +8,10 @@ A customizable dashboard as the new tab page for Chrome, optionally with bookmar
 - **Tabs (sets)**: Shortcuts are grouped into sets, which are shown as tabs
 - **Drag & drop**: Shortcuts, dividers and tabs can be rearranged via drag & drop
 - **Dividers**: Horizontal and vertical lines to structure the layout
-- **Quick access bar**: Shows the most used, recently used or (combined) best shortcuts, number of items adjustable (3–12)
+- **Quick access bar**: Shows the most used, recently used or (combined) best shortcuts, number of items adjustable (3–12); left click opens the shortcut in the current tab, middle click in a new tab
 - **Themes**: Light, Dark, Minimal, Catppuccin Mocha and 8bit
 - **Startup behavior**: Remember the last opened tab or always open a specific tab
-- **Export / import**: Back up and restore sets and shortcuts as JSON
+- **Export / import**: Back up and restore sets, shortcuts and usage statistics as JSON
 
 ## Installation
 
@@ -25,6 +25,7 @@ A customizable dashboard as the new tab page for Chrome, optionally with bookmar
 
 ### Adding and editing shortcuts
 - Use the "+" icon to enter a name and URL (or add a divider)
+- URLs without a scheme get `https://` automatically (`http://` for `localhost` and loopback addresses); only `http(s)` addresses are accepted
 - In the shortcut settings, shortcuts can be edited, moved to another set or deleted
 
 ### Managing tabs
@@ -38,6 +39,12 @@ A customizable dashboard as the new tab page for Chrome, optionally with bookmar
 - Toggle bookmarks mode and refresh bookmarks
 - Configure the quick access bar
 - Export / import data
+
+### Quick access bar
+- An entry appears after its first use and is ranked by the selected mode (most used, recently used or balanced)
+- Left click opens the shortcut in the current tab, middle click opens it in a new tab
+- Usage is counted per URL (also in bookmarks mode); the same URL in several sets appears only once
+- If you change a shortcut's URL, its usage history moves to the new URL
 
 ## Bookmarks mode
 
@@ -83,15 +90,16 @@ The extension does not update itself (unpacked extensions cannot overwrite their
 2. On startup, `update-check.js` checks (at most every 6 hours) whether the `manifest.json` on GitHub has a newer `version` and shows a notice if so
 3. Run `git pull` on the device. Changes to HTML/JS/CSS usually apply on the next new tab; for manifest changes, reload the extension
 
-Setup: replace `<USER>` and `<REPO>` in `update-check.js` (`UPDATE_MANIFEST_URL`) and in `host_permissions` of `manifest.json`. The repo must be public. Bump the `version` in `manifest.json` whenever you publish a change. Export files containing personal data do not belong in the repo.
+Setup: set `UPDATE_MANIFEST_URL` in `update-check.js` to the raw URL of the `manifest.json` in your repo. The repo must be public (raw URLs of private repos return 404 without login, so the check silently does nothing). No `host_permissions` are needed, because `raw.githubusercontent.com` allows cross-origin requests. Bump the `version` in `manifest.json` whenever you publish a change. Export files containing personal data do not belong in the repo.
 
 Data (sets, shortcuts, settings) is stored per device in `chrome.storage.local` and is not synchronized via GitHub.
 
 ## Technical details
 
 - **Manifest version**: 3
-- **Permissions**: `bookmarks`, `storage`, host access to `raw.githubusercontent.com` (only for the update check)
-- **Data storage**: `chrome.storage.local` (schema version 2, see `storage.js`)
+- **Permissions**: `bookmarks`, `storage`
+- **Data storage**: `chrome.storage.local` (schema version 2, see `storage.js`); usage statistics are kept per URL in a separate key `usageStats`
+- **Multiple open pages**: Open dashboard pages pick up each other's changes via `chrome.storage.onChanged`, so a stale page does not overwrite newer data
 - **Shortcut icons**: Favicons via the Google favicon service
 - **UI icons**: Font Awesome 6 (via CDN)
 - **Themes**: CSS via the `data-theme` attribute on `body`
