@@ -1,0 +1,56 @@
+name: Release
+
+# Runs when a version tag is pushed, e.g.:
+#   git tag v1.3.0
+#   git push origin v1.3.0
+# Commit messages and normal pushes do not trigger it.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write # needed to create the release and attach the ZIP
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check that the tag matches the manifest version
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          MANIFEST_VERSION="$(jq -r .version manifest.json)"
+          if [ "$TAG_VERSION" != "$MANIFEST_VERSION" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match version $MANIFEST_VERSION in manifest.json"
+            exit 1
+          fi
+
+      - name: Build ZIP (only the files the extension needs)
+        run: |
+          NAME="my-dashboard-newtab"
+          mkdir -p "dist/$NAME"
+
+          # Required files: the build fails if one is missing
+          cp manifest.json index.html style.css script.js storage.js update-check.js "dist/$NAME/"
+          cp -r icons "dist/$NAME/"
+
+          # Optional: only the 8bit theme uses the font
+          if [ -f Ndot-55.otf ]; then
+            cp Ndot-55.otf "dist/$NAME/"
+          else
+            echo "::warning::Ndot-55.otf not found, the ZIP is built without it"
+          fi
+
+          cd dist
+          zip -r "../$NAME-$GITHUB_REF_NAME.zip" "$NAME"
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            "my-dashboard-newtab-$GITHUB_REF_NAME.zip" \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes
