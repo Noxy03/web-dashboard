@@ -88,11 +88,21 @@ The extension does not update itself (unpacked extensions cannot overwrite their
 
 1. Clone the repo on each device and load the clone as an unpacked extension in `chrome://extensions/`
 2. On startup, `update-check.js` checks (at most every 6 hours) whether the `manifest.json` on GitHub has a newer `version` and shows a notice if so
-3. Run `git pull` on the device. Changes to HTML/JS/CSS usually apply on the next new tab; for manifest changes, reload the extension
+3. Update the device: run `git pull`, or download the ZIP from the [latest release](https://github.com/Noxy03/web-dashboard/releases/latest) and replace the extension folder. Changes to HTML/JS/CSS usually apply on the next new tab; for manifest changes, reload the extension
 
 Setup: set `UPDATE_MANIFEST_URL` in `update-check.js` to the raw URL of the `manifest.json` in your repo. The repo must be public (raw URLs of private repos return 404 without login, so the check silently does nothing). No `host_permissions` are needed, because `raw.githubusercontent.com` allows cross-origin requests. Bump the `version` in `manifest.json` whenever you publish a change. Export files containing personal data do not belong in the repo.
 
 Data (sets, shortcuts, settings) is stored per device in `chrome.storage.local` and is not synchronized via GitHub.
+
+## Releases
+
+A GitHub Action (`.github/workflows/release.yml`) builds a ZIP with only the files the extension needs whenever a **version tag** is pushed. Normal pushes and commit messages do not trigger it.
+
+1. Bump `version` in `manifest.json`, commit and push
+2. `git tag v1.3.0` and `git push origin v1.3.0` (the tag must match the version in `manifest.json`, otherwise the build stops)
+3. The release with `my-dashboard-newtab-v1.3.0.zip` appears under "Releases"
+
+Install from the ZIP: extract it, open `chrome://extensions/`, enable "Developer mode", click "Load unpacked" and select the extracted folder.
 
 ## Technical details
 
@@ -124,3 +134,5 @@ Data (sets, shortcuts, settings) is stored per device in `chrome.storage.local` 
 - `style.css`: Styling and themes
 - `Ndot-55.otf`: Font for the 8bit theme
 - `icons/`: Extension icons (32, 64, 128, 256, 512 px)
+- `.github/workflows/release.yml`: Builds the release ZIP when a version tag is pushed
+- `.gitignore`: Keeps exports/backups and build output out of the repo

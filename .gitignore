@@ -1,1 +1,14 @@
+# Exports/backups can contain private shortcuts and URLs
 backup/
+dashboard_backup*.json
+*backup*.json
+
+# Build output (the release workflow builds in dist/)
+dist/
+*.zip
+
+# OS / editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -4,8 +4,8 @@
 //
 // Important: the extension does NOT update itself. An unpacked extension
 // cannot overwrite its own files, and MV3 forbids remotely hosted code.
-// The notice only reminds you to run `git pull` on this device and reload
-// the extension.
+// The notice only points you to the new release (ZIP) or reminds you to run
+// `git pull` on this device, followed by reloading the extension.
 //
 // How it works:
 // - The remote version is fetched at most once per UPDATE_CHECK_INTERVAL_MS.
@@ -18,6 +18,8 @@
 
 const UPDATE_MANIFEST_URL =
     "https://raw.githubusercontent.com/Noxy03/web-dashboard/main/manifest.json";
+// Where the notice sends you (ZIP built by .github/workflows/release.yml)
+const UPDATE_RELEASES_URL = "https://github.com/Noxy03/web-dashboard/releases/latest";
 const UPDATE_CHECK_STORAGE_KEY = "updateCheck";
 const UPDATE_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6 hours
 const UPDATE_FETCH_TIMEOUT_MS = 5000;
@@ -78,8 +80,18 @@ function showUpdateBanner(latestVersion, installedVersion, info) {
 
     const text = document.createElement("span");
     text.textContent =
-        `Update available: v${latestVersion} (installed: v${installedVersion}). ` +
-        `Run "git pull" and reload the extension.`;
+        `Update available: v${latestVersion} (installed: v${installedVersion}). `;
+
+    const link = document.createElement("a");
+    link.href = UPDATE_RELEASES_URL;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = "Download the release";
+    link.style.color = "inherit";
+    link.style.textDecoration = "underline";
+
+    const hint = document.createElement("span");
+    hint.textContent = ` or run "git pull", then reload the extension. `;
 
     const dismiss = document.createElement("button");
     dismiss.type = "button";
@@ -90,7 +102,7 @@ function showUpdateBanner(latestVersion, installedVersion, info) {
         await saveUpdateInfo(info);
     });
 
-    banner.append(text, dismiss);
+    banner.append(text, link, hint, dismiss);
     document.body.appendChild(banner);
 }
 
