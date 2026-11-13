@@ -1,13 +1,25 @@
 name: Release
 
-# Runs when a version tag is pushed, e.g.:
-#   git tag v1.3.0
-#   git push origin v1.3.0
-# Commit messages and normal pushes do not trigger it.
+# Triggers:
+# 1) Push of a version tag, e.g.:
+#      git tag v1.3.0
+#      git push origin main v1.3.0
+#    -> builds the ZIP and creates the release. Commit messages and normal
+#       pushes do not trigger it.
+# 2) Manual run (Actions tab -> Release -> Run workflow):
+#    - "tag" empty:  DRY RUN. Builds the ZIP from the selected branch and lists
+#                    its content in the log. No release is created.
+#    - "tag" filled: checks out that EXISTING tag and creates the release for it.
 on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to release (e.g. v1.3.0). Leave empty for a dry run without release."
+        required: false
+        default: ""
 
 permissions:
   contents: write # needed to create the release and attach the ZIP
@@ -17,14 +29,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref }}
 
-      - name: Check that the tag matches the manifest version
+      - name: Determine tag and check it against the manifest version
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
-          TAG_VERSION="${GITHUB_REF_NAME#v}"
           MANIFEST_VERSION="$(jq -r .version manifest.json)"
-          if [ "$TAG_VERSION" != "$MANIFEST_VERSION" ]; then
-            echo "::error::Tag $GITHUB_REF_NAME does not match version $MANIFEST_VERSION in manifest.json"
-            exit 1
+
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ -z "$INPUT_TAG" ]; then
+            echo "Dry run: building v$MANIFEST_VERSION from $REF_NAME, no release will be created"
+            echo "TAG=v$MANIFEST_VERSION" >> "$GITHUB_ENV"
+            echo "DRY_RUN=true" >> "$GITHUB_ENV"
+          else
+            TAG="${INPUT_TAG:-$REF_NAME}"
+            if [ "${TAG#v}" != "$MANIFEST_VERSION" ]; then
+              echo "::error::Tag $TAG does not match version $MANIFEST_VERSION in manifest.json"
+              exit 1
+            fi
+            echo "TAG=$TAG" >> "$GITHUB_ENV"
+            echo "DRY_RUN=false" >> "$GITHUB_ENV"
           fi
 
       - name: Build ZIP (only the files the extension needs)
@@ -44,13 +71,18 @@ jobs:
           fi
 
           cd dist
-          zip -r "../$NAME-$GITHUB_REF_NAME.zip" "$NAME"
+          zip -r "../$NAME-$TAG.zip" "$NAME"
+
+      - name: Show ZIP content
+        run: unzip -l "my-dashboard-newtab-$TAG.zip"
 
       - name: Create release
+        if: env.DRY_RUN != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" \
-            "my-dashboard-newtab-$GITHUB_REF_NAME.zip" \
-            --title "$GITHUB_REF_NAME" \
+          gh release create "$TAG" \
+            "my-dashboard-newtab-$TAG.zip" \
+            --verify-tag \
+            --title "$TAG" \
             --generate-notes
